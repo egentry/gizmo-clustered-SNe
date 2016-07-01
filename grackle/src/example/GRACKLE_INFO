@@ -1,0 +1,67 @@
+make[3]: Entering directory '/home/alupi/Desktop/AGORA/gizmo_MHD_gr2.1/MHD_LUPI3/grackle/src/clib'
+
+The Grackle Version 2.1
+Mercurial Branch   default
+Mercurial Revision b3f146431b45+
+
+make[3]: Leaving directory '/home/alupi/Desktop/AGORA/gizmo_MHD_gr2.1/MHD_LUPI3/grackle/src/clib'
+Grackle build options:
+make[3]: Entering directory '/home/alupi/Desktop/AGORA/gizmo_MHD_gr2.1/MHD_LUPI3/grackle/src/clib'
+
+   MACHINE: Generic Linux
+   MACHINE-NAME: linux-gnu
+
+   CONFIG_PRECISION  [precision-{32,64}]                     : 64
+   CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : high
+
+make[3]: Leaving directory '/home/alupi/Desktop/AGORA/gizmo_MHD_gr2.1/MHD_LUPI3/grackle/src/clib'
+Grackle build flags:
+make[3]: Entering directory '/home/alupi/Desktop/AGORA/gizmo_MHD_gr2.1/MHD_LUPI3/grackle/src/clib'
+
+Usage: which [options] [--] COMMAND [...]
+Write the full path of COMMAND(s) to standard output.
+
+  --version, -[vV] Print version and exit successfully.
+  --help,          Print this help and exit successfully.
+  --skip-dot       Skip directories in PATH that start with a dot.
+  --skip-tilde     Skip directories in PATH that start with a tilde.
+  --show-dot       Don't expand a dot to current directory in output.
+  --show-tilde     Output a tilde for HOME directory for non-root.
+  --tty-only       Stop processing options on the right if not on tty.
+  --all, -a        Print all matches in PATH, not just the first
+  --read-alias, -i Read list of aliases from stdin.
+  --skip-alias     Ignore option --read-alias; don't read stdin.
+  --read-functions Read shell functions from stdin.
+  --skip-functions Ignore option --read-functions; don't read stdin.
+
+Recommended use is to write the output of (alias; declare -f) to standard
+input, so that which can show aliases and shell functions. See which(1) for
+examples.
+
+If the options --read-alias and/or --read-functions are specified then the
+output can be a full alias or function definition, optionally followed by
+the full path of each command used inside of those.
+
+Report bugs to <which-bugs@gnu.org>.
+CPP = 
+CC  = /usr/bin/gcc
+CXX = /usr/bin/g++
+FC  = /usr/bin/gfortran
+F90 = /usr/bin/gfortran
+LD  = /usr/bin/gcc
+LIBTOOL = /usr/bin/libtool
+
+DEFINES = -DLINUX -DH5_USE_16_API -fPIC  -DCONFIG_BFLOAT_8
+
+INCLUDES = -I/include     -I.
+
+CPPFLAGS = -P -traditional
+CFLAGS   =  -O2
+CXXFLAGS =  -O2
+FFLAGS   = -fno-second-underscore -ffixed-line-length-132 -O2
+F90FLAGS = -fno-second-underscore -O2
+LDFLAGS  = 
+
+LIBS     = -L/lib -lhdf5 -lz  -lgfortran 
+
+make[3]: Leaving directory '/home/alupi/Desktop/AGORA/gizmo_MHD_gr2.1/MHD_LUPI3/grackle/src/clib'

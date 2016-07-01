@@ -1,0 +1,23 @@
+
+usage: which [-as] program ...
+CPP = 
+CC  = /usr/bin/gcc
+CXX = /usr/bin/g++
+FC  = /usr/local/bin/gfortran
+F90 = /usr/local/bin/gfortran
+LD  = /usr/bin/gcc
+LIBTOOL = /usr/bin/libtool
+
+DEFINES = -DLINUX -DH5_USE_16_API -fPIC  -DCONFIG_BFLOAT_8
+
+INCLUDES = -I/usr/include     -I.
+
+CPPFLAGS = -P -traditional
+CFLAGS   =  -O2
+CXXFLAGS =  -O2
+FFLAGS   = -fno-second-underscore -ffixed-line-length-132 -O2
+F90FLAGS = -fno-second-underscore -O2
+LDFLAGS  = 
+
+LIBS     = -L/usr/lib64 -lhdf5 -lz  -lgfortran 
+

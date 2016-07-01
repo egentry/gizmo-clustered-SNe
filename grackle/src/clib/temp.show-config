@@ -1,0 +1,7 @@
+
+   MACHINE: Generic Linux
+   MACHINE-NAME: linux-gnu
+
+   CONFIG_PRECISION  [precision-{32,64}]                     : 64
+   CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : high
+

@@ -1,3 +1,7 @@
+.DS_STORE
+out.compile
+out.make.DEPEND
+
 # Object files
 *.o
 *.ko
