@@ -598,6 +598,14 @@ HDF5INCL = -DH5_USE_16_API
 HDF5LIB  = -lhdf5 -lz
 MPICHLIB = #
 OPT     += #
+
+
+tmp := $(shell cd grackle && csh ./configure)
+tmp := $(shell echo "CONFIG_MACHINE = darwin" > grackle/src/clib/Make.config.machine)
+
+tmp := $(shell git checkout grackle/src/clib/Make.mach.darwin)
+tmp := $(shell echo "MACH_INSTALL_PREFIX = $(PWD)/grackle/local" >> grackle/src/clib/Make.mach.darwin)
+
 ##
 ## ESG: this is my own laptop installation (2013 MacBook Pro running El Capitan)
 ##      based on Phil's laptop systype
@@ -821,9 +829,9 @@ clean:
 
 all:
 	make -C grackle/src/clib/ HDF5_HOME="$(HDF5_HOME)"
-	mkdir grackle/local
-	mkdir grackle/local/include
-	mkdir grackle/local/lib
+	mkdir -p grackle/local
+	mkdir -p grackle/local/include
+	mkdir -p grackle/local/lib
 	make -C grackle/src/clib/ install
 	make $(EXEC)
 

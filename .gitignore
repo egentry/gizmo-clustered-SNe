@@ -1,6 +1,21 @@
 .DS_STORE
 out.compile
 out.make.DEPEND
+DEPEND
+GRACKLE_INFO
+
+temp.show-config
+temp.show-flags
+
+Make.config.machine
+
+GIZMO
+GIZMO_config.h
+compile_time_info.c
+.libs
+
+grackle/local/include/*
+grackle/local/lib/*
 
 # Object files
 *.o
