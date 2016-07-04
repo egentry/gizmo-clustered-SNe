@@ -2,10 +2,13 @@
 out.compile
 out.make.DEPEND
 DEPEND
+DEPEND.bak
 GRACKLE_INFO
 
 temp.show-config
 temp.show-flags
+auto_show_config.c
+auto_show_flags.c
 
 Make.config.machine
 

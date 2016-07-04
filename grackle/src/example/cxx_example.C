@@ -154,6 +154,8 @@ int main(int argc, char *argv[])
   // some timestep
   double dt = 3.15e7 * 1e6 / my_units.time_units;
 
+
+  gr_float udot;
   if (solve_chemistry(&my_units,
                       a_value, dt,
                       grid_rank, grid_dimension,
@@ -164,7 +166,7 @@ int main(int argc, char *argv[])
                       HeI_density, HeII_density, HeIII_density,
                       H2I_density, H2II_density,
                       DI_density, DII_density, HDI_density,
-                      e_density, metal_density) == 0) {
+                      e_density, metal_density, udot) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
     return 0;
   }
@@ -173,7 +175,7 @@ int main(int argc, char *argv[])
   gr_float *cooling_time;
   cooling_time = new gr_float[field_size];
   if (calculate_cooling_time(&my_units,
-                             a_value,
+                           a_value,
                              grid_rank, grid_dimension,
                              grid_start, grid_end,
                              density, energy,
@@ -183,6 +185,7 @@ int main(int argc, char *argv[])
                              H2I_density, H2II_density,
                              DI_density, DII_density, HDI_density,
                              e_density, metal_density, 
+                             udot,
                              cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;
