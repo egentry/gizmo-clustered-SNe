@@ -582,7 +582,7 @@ endif
 #----------------------------
 ifeq ($(SYSTYPE),"denali")
 CC       =  mpicc
-CXX      =  mpiccxx
+CXX      =  mpicxx
 FC       =  mpifort
 OPTIMIZE = -O1 -funroll-loops
 OPTIMIZE += -g -Wall # compiler warnings
@@ -606,10 +606,27 @@ tmp := $(shell echo "CONFIG_MACHINE = darwin" > grackle/src/clib/Make.config.mac
 tmp := $(shell git checkout grackle/src/clib/Make.mach.darwin)
 tmp := $(shell echo "MACH_INSTALL_PREFIX = $(PWD)/grackle/local" >> grackle/src/clib/Make.mach.darwin)
 
-##
-## ESG: this is my own laptop installation (2013 MacBook Pro running El Capitan)
-##      based on Phil's laptop systype
-## --
+endif
+
+#----------------------------
+ifeq ($(SYSTYPE),"hyades")
+CC       =  mpicc
+CXX      =  mpicxx
+OPTIMIZE =  -g -Wall
+GSL_INCL = -I$(HOME)/local/gsl-2.1/include
+GSL_LIBS = -L$(HOME)/local/gsl-2.1/lib
+FFTW_INCL= -I$(HOME)/local/fftw-2.1.5/include
+FFTW_LIBS= -L$(HOME)/local/fftw-2.1.5/lib
+HDF5INCL = -I$(HOME)/local/miniconda3/include -DH5_USE_16_API
+HDF5LIB  = -L$(HOME)/local/miniconda3/lib -lhdf5 -lz
+MPICHLIB = #
+
+tmp := $(shell cd grackle && csh ./configure)
+
+tmp := $(shell echo "CONFIG_MACHINE = linux-gnu " > grackle/src/clib/Make.config.machine)
+tmp := $(shell git checkout grackle/src/clib/Make.mach.linux-gnu)
+tmp := $(shell echo "MACH_INSTALL_PREFIX = $(PWD)/grackle/local" >> grackle/src/clib/Make.mach.linux-gnu)
+
 endif
 
 

@@ -40,4 +40,5 @@
 #SYSTYPE="Kolob"
 #SYSTYPE="Centos5-Gnu"
 #SYSTYPE="OPA-Cluster64-Intel"
-SYSTYPE="denali"
+#SYSTYPE="denali"
+#SYSTYPE="hyades"
