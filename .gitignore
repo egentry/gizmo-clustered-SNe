@@ -11,6 +11,7 @@ temp.show-version
 auto_show_version.c
 auto_show_config.c
 auto_show_flags.c
+log
 
 Make.config.machine
 
