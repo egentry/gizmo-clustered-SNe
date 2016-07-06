@@ -313,7 +313,7 @@ void init(void)
         
 #ifdef GRACKLE_OPTS
             if(RestartFlag == 0 && P[i].Type!=1 && P[i].Type!=5)
-		P[i].Metallicity[0]=All.InitMetallicityinSolar*LUPI_SOLAR_MET;
+		P[i].Metallicity[0]=All.InitMetallicityinSolar*GENTRY_SOLAR_MET;
 #endif
         
         
