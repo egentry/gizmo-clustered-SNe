@@ -36,10 +36,10 @@ void gentry_fb_calc()
 {
   // double *dtWinds;
   int i,j;
-  int first_SN=All.N_SNe;
-  int last_SN=-1;
-  int first_OB=All.N_SNe;
-  int last_OB=-1;
+  int first_SN = All.N_SNe;
+  int last_SN  = -1;
+  int first_OB = All.N_SNe;
+  int last_OB  = -1;
 
   if(All.TimeStep == 0) return;
   if(ThisTask==0) printf("Start SN/OB release\n");
@@ -50,8 +50,10 @@ void gentry_fb_calc()
   // // Find active stars and SNe
   for(i=0;i<All.N_SNe;i++)
   {
+
+#ifdef WINDS
     //OB stars
-    if(All.Time>All.SN_time[i])
+    if(All.Time<All.SN_time[i])
     {
       if(i<=first_OB) first_OB=i;
       if(i>=last_OB)   last_OB=i;
@@ -59,6 +61,8 @@ void gentry_fb_calc()
       // if(All.Time>=All.SN_time[i] && All.Time-All.TimeStep<All.SN_time[i])
       //   dtWinds[i]=DMIN(All.TimeStep,All.SN_time[i]-All.Time+All.TimeStep);
     }
+#endif
+
 
     //SNe
     if(All.Time>All.SN_time[i] && All.Time-All.TimeStep<All.SN_time[i])
@@ -78,7 +82,7 @@ void gentry_fb_calc()
   for(i=0; i<All.N_SNe; i++)
   {
     // calculate myweight
-    if(i>=first_OB && i<=DMAX(last_OB,last_SN)) neighbour_loop(0,i,my_weight);
+    if(i>=IMIN(first_OB,first_SN) && i<=IMAX(last_OB,last_SN)) neighbour_loop(0,i,my_weight);
     //printf("%d %g\n",ThisTask,myweight);
     //fflush(stdout);
 

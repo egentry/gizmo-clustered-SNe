@@ -348,7 +348,7 @@ void begrun(void)
 
 
     All.SN_time     = (double*) malloc(All.N_SNe * sizeof(double));
-    All.SN_time[ 0] = 0           / All.UnitTime_in_s;
+    All.SN_time[ 0] = 3e+10       / All.UnitTime_in_s; // if it's exactly 0, it'll get skipped
     All.SN_time[ 1] = 1.99471e+13 / All.UnitTime_in_s;
     All.SN_time[ 2] = 8.02558e+13 / All.UnitTime_in_s;
     All.SN_time[ 3] = 9.92043e+13 / All.UnitTime_in_s;

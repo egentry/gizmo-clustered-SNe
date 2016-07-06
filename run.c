@@ -200,7 +200,10 @@ void calculate_non_standard_physics(void)
     compute_stellar_feedback();
 #endif
     
-    
+#ifdef GENTRY_FB
+    //compute the actual SNe feedback
+    gentry_fb_calc();
+#endif
     
     
     
