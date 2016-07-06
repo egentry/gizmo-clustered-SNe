@@ -1299,6 +1299,24 @@ extern struct global_data_all_processes
 #endif
 //End A Lupi
 
+#ifdef GENTRY_FB
+    int N_SNe;
+
+    // dynamically allocated arrays
+    double* SN_position_x;
+    double* SN_position_y;
+    double* SN_position_z;
+
+    double* SN_time;
+    double* SN_mass;
+    double* SN_mass_Z;
+    
+#ifdef WINDS
+    double* wind_mass;
+#endif
+
+#endif
+
 }
 All;
 

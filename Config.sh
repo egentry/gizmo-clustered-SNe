@@ -91,7 +91,7 @@ HYDRO_MESHLESS_FINITE_MASS      # Lagrangian (constant-mass) finite-volume Godun
                                 # enclosing a neighbor number set in the parameter file. baryons search for other baryons,
                                 # dm for dm, sidm for sidm, etc. If set to numerical value, the maximum softening is this times All.ForceSoftening[for appropriate particle type]
 ## -----------------------------------------------------------------------------------------------------
-#NOGRAVITY                      # turn off self-gravity (compatible with analytic_gravity)
+NOGRAVITY                      # turn off self-gravity (compatible with analytic_gravity)
 #GRAVITY_NOT_PERIODIC           # self-gravity is not periodic, even though the rest of the box is periodic
 ## -----------------------------------------------------------------------------------------------------
 #ANALYTIC_GRAVITY               # Specific analytic gravitational force to use instead of/with self-gravity
@@ -196,6 +196,8 @@ HAVE_HDF5						# needed when HDF5 I/O support is desired
 ####################################################################################################
 ####################################################################################################
 
+GENTRY_FB
+#WINDS
 
 ####################################################################################################
 ####################################################################################################

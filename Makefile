@@ -97,7 +97,11 @@ FC 	 = mpif90
 
 OPTIMIZE = -Wall  -g   # optimization and warning flags (default)
 
+<<<<<<< Updated upstream
 MPICHLIB = #
+=======
+MPICHLIB = -L/usr/local/lib 
+>>>>>>> Stashed changes
 
 GRACKLEINCL = -I./grackle/local/include
 GRACKLELIBS = -L./grackle/local/lib -lgrackle -lhdf5
@@ -586,17 +590,12 @@ CXX      =  mpicxx
 FC       =  mpifort
 OPTIMIZE = -O1 -funroll-loops
 OPTIMIZE += -g -Wall # compiler warnings
-GMP_INCL = #
-GMP_LIBS = #
-MKL_INCL = #
-MKL_LIBS = #
 GSL_INCL = 
 GSL_LIBS = 
 FFTW_INCL= 
 FFTW_LIBS= 
 HDF5INCL = -DH5_USE_16_API
 HDF5LIB  = -lhdf5 -lz
-MPICHLIB = #
 OPT     += #
 
 
@@ -617,8 +616,8 @@ GSL_INCL = -I$(HOME)/local/gsl-2.1/include
 GSL_LIBS = -L$(HOME)/local/gsl-2.1/lib
 FFTW_INCL= -I$(HOME)/local/fftw-2.1.5/include
 FFTW_LIBS= -L$(HOME)/local/fftw-2.1.5/lib
-HDF5INCL = -I$(HOME)/local/miniconda3/include -DH5_USE_16_API
-HDF5LIB  = -L$(HOME)/local/miniconda3/lib -lhdf5 -lz
+HDF5INCL = -I$(HOME)/local/miniconda3/envs/hdf/include -DH5_USE_16_API
+HDF5LIB  = -L$(HOME)/local/miniconda3/envs/hdf/lib -lhdf5 -lz
 MPICHLIB = #
 
 tmp := $(shell cd grackle && csh ./configure)
@@ -711,6 +710,10 @@ endif
 
 ifeq (CREASEY,$(findstring CREASEY,$(CONFIGVARS)))
 OBJS    += creasey.o
+endif
+
+ifeq (GENTRY_FB,$(findstring GENTRY_FB,$(CONFIGVARS)))
+OBJS    += gentry_fb.o
 endif
 
 ifeq (GALSF_FB_RPWIND_LOCAL,$(findstring GALSF_FB_RPWIND_LOCAL,$(CONFIGVARS)))
