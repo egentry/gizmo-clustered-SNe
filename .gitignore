@@ -4,6 +4,8 @@ out.make.DEPEND
 DEPEND
 DEPEND.bak
 GRACKLE_INFO
+.ipynb_checkpoints
+
 
 temp.show-config
 temp.show-flags
@@ -11,6 +13,7 @@ temp.show-version
 auto_show_version.c
 auto_show_config.c
 auto_show_flags.c
+*-usedvalues
 
 Make.config.machine
 

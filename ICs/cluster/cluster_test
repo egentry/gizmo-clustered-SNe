@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+#PBS -l nodes=1:ppn=16
+#PBS -l walltime=24:00:00
+#
+#PBS -q normal
+#
+#PBS -M egentry@ucsc.edu
+#PBS -m e
+#
+#PBS -S /bin/bash
+#
+cd $PBS_O_WORKDIR
+
+source $HOME/.bashrc
+time mpirun -np 16 ./GIZMO ICs/cluster/cluster.params
