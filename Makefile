@@ -97,11 +97,7 @@ FC 	 = mpif90
 
 OPTIMIZE = -Wall  -g   # optimization and warning flags (default)
 
-<<<<<<< Updated upstream
 MPICHLIB = #
-=======
-MPICHLIB = -L/usr/local/lib 
->>>>>>> Stashed changes
 
 GRACKLEINCL = -I./grackle/local/include
 GRACKLELIBS = -L./grackle/local/lib -lgrackle -lhdf5
