@@ -247,14 +247,12 @@ void neighbour_loop(int mode,int iSN,double *out_weight)
           met_shock = zSN;
         }
 
-        // printf("%g %g %g\n",mdotWIND,m_shock,met_shock);
-        SphP[j].InternalEnergy += e_shock*wk/P[j].Mass;
 
-#ifdef WINDS
         // printf("%g %g -> %g\n",All.SN_position_x[iSN],P[j].Pos[0],wk_p[0]);
         double x=P[j].Mass/(P[j].Mass+m_shock*wk);
         // double v=sqrt(P[j].Vel[0]*P[j].Vel[0]+P[j].Vel[1]*P[j].Vel[1]
                      // +P[j].Vel[2]*P[j].Vel[2]);
+#ifdef WINDS
         for(k=0;k<3;k++)
         {
           wk_p[k]/=my_weight[1];
@@ -263,24 +261,27 @@ void neighbour_loop(int mode,int iSN,double *out_weight)
           P[j].Vel[k]        =x*(P[j].Vel[k]        - p_shock*(wk_p[k])/P[j].Mass);
           SphP[j].VelPred[k] =x*(SphP[j].VelPred[k] - p_shock*(wk_p[k])/P[j].Mass);
         }
+
         // double vnew=sqrt(P[j].Vel[0]*P[j].Vel[0]+P[j].Vel[1]*P[j].Vel[1]
                         // +P[j].Vel[2]*P[j].Vel[2]);
         // printf("Delta v: %g / Delta p: %g of %g\n",
                // vnew-v,P[j].Mass*(vnew-v),p_shock);
         // fflush(stdout);
         // total_mom+=p_shock*sqrt(pow(wk_p[0],2)+pow(wk_p[1],2)+pow(wk_p[2],2));
-    
-        P[j].Metallicity[0]=x*(P[j].Metallicity[0]+met_shock*wk/P[j].Mass);
+#endif
+        SphP[j].InternalEnergy += e_shock*wk/P[j].Mass;
+
+        P[j].Metallicity[0]=x*(P[j].Metallicity[0] + met_shock*wk/P[j].Mass);
         if(P[j].Mass<m_shock*wk)
         {  
-          printf("Mass: %d %g %d %g %g %g %g %g\n",
+          printf("Mass: %d %g %d %g %g %g %g\n",
                  iSN,m_shock,numngb_inbox,my_weight[0],P[j].Mass,
-                 sqrt(r2),wk,wk_p[0]);
+                 sqrt(r2),wk);
           fflush(stdout);
           // // endrun(1234);
         }
         P[j].Mass+=m_shock*wk;
-#endif
+
       } // for(n = 0; n < numngb; n++)
       // if(iSN==7 && my_weight>0) printf("particle %d: %g\n",ThisTask,my_weight);   
     } // while(startnode >= 0)
