@@ -97,16 +97,16 @@ FC 	 = mpif90
 
 OPTIMIZE = -Wall  -g   # optimization and warning flags (default)
 
-MPICHLIB = -L/usr/local/lib -lmpich
+MPICHLIB = #
 
 GRACKLEINCL = -I./grackle/local/include
-GRACKLELIBS = -L./grackle/local/lib -lgrackle -L/usr/lib64 -lhdf5
+GRACKLELIBS = -L./grackle/local/lib -lgrackle -lhdf5
 
 HDF5_HOME   = /usr
-HDF5LIB     = -L/usr/lib64 -lhdf5
+HDF5LIB     = -lhdf5
 HDF5INCL    = -I/usr/include -DH5_USE_16_API
 
-GSLLIB	    = -L/usr/lib64 -lgsl
+GSLLIB	    = -lgsl
 GSLINCL	    = -I/usr/include
 
 
