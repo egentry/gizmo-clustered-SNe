@@ -69,5 +69,7 @@ MinGasTemp                         10
 InitMetallicity					   1
 MetalCoolingOn					   1
 UVBackgroundOn					   1
+GrackleDataFile					   grackle/input/CloudyData_UVB=HM2012.h5
+
 
 
