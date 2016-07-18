@@ -91,7 +91,7 @@ HYDRO_MESHLESS_FINITE_MASS      # Lagrangian (constant-mass) finite-volume Godun
                                 # enclosing a neighbor number set in the parameter file. baryons search for other baryons,
                                 # dm for dm, sidm for sidm, etc. If set to numerical value, the maximum softening is this times All.ForceSoftening[for appropriate particle type]
 ## -----------------------------------------------------------------------------------------------------
-#NOGRAVITY                      # turn off self-gravity (compatible with analytic_gravity)
+NOGRAVITY                      # turn off self-gravity (compatible with analytic_gravity)
 #GRAVITY_NOT_PERIODIC           # self-gravity is not periodic, even though the rest of the box is periodic
 ## -----------------------------------------------------------------------------------------------------
 #ANALYTIC_GRAVITY               # Specific analytic gravitational force to use instead of/with self-gravity
@@ -195,7 +195,17 @@ HAVE_HDF5						# needed when HDF5 I/O support is desired
 ##
 ####################################################################################################
 ####################################################################################################
+# GRACKLE_OPTS
 
+COOLING                        # enables radiative cooling and heating: if GALSF, also external UV background read from file "TREECOOL"
+GRACKLE                        # enable GRACKLE: cooling+chemistry package (requires COOLING above; https://grackle.readthedocs.org/en/latest )
+GRACKLE_CHEMISTRY=0            # choose GRACKLE cooling chemistry: (0)=tabular, (1)=Atomic, (2)=(1)+H2+H2I+H2II, (3)=(2)+DI+DII+HD
+GRACKLE_OPTS			# additional options for GRACKLE chemistry solver (Lupi)
+# # GRACKLE_FIX_TEMPERATURE	# if the initial temperature is provided via parameter file, the intial internal energy is computed taking into account the mmw dependence on density too (Lupi)
+# # GRACKLE_FULLYIMPLICIT		# fully implicit solution for Grackle (customized version of the library) (Lupi)
+
+GENTRY_FB
+#WINDS
 
 ####################################################################################################
 ####################################################################################################

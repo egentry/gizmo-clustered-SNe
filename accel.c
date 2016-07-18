@@ -150,8 +150,8 @@ void compute_stellar_feedback(void)
     if(All.FeedbackMode % 4 > 0) lupi_fb_calc(0);
     //compute IM mass star mass loss
     if(All.FeedbackMode > 4)     lupi_fb_calc(1);
-
 #endif
+
     CPU_Step[CPU_MISC] += measure_time();
 }
 #endif // GALSF //
