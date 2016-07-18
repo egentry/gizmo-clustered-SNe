@@ -340,9 +340,9 @@ void begrun(void)
       int i;
       for(i=0; i<All.N_SNe; i++) 
       {
-        All.SN_position_x[i] = 250*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
-        All.SN_position_y[i] = 250*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
-        All.SN_position_z[i] = 250*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
+        All.SN_position_x[i] = boxHalf*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
+        All.SN_position_y[i] = boxHalf*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
+        All.SN_position_z[i] = boxHalf*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
       }
     }
 
