@@ -16,6 +16,7 @@ auto_show_flags.c
 *-usedvalues
 ewald_spc_table_64_dbl.dat
 *.txt
+restartfiles
 
 Make.config.machine
 
