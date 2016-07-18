@@ -38,7 +38,7 @@ NumFilesWrittenInParallel          1
 ErrTolIntAccuracy                  0.002
 CourantFac                         0.05
 MaxRMSDisplacementFac              0.1
-MaxSizeTimestep                    0.00001
+MaxSizeTimestep                    0.001
 MinSizeTimestep                    1e-08
 ErrTolTheta                        0.7
 ErrTolForceAcc                     0.0015
@@ -70,5 +70,6 @@ InitMetallicity					   1
 MetalCoolingOn					   1
 UVBackgroundOn					   1
 GrackleDataFile					   grackle/input/CloudyData_UVB=HM2012.h5
+SNeDataFile  					   ./ICs/single/1_SNe.dat
 
 

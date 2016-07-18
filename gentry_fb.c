@@ -34,6 +34,7 @@ void neighbour_loop(int,int, double*);
 
 void gentry_fb_calc()
 {
+
   // double *dtWinds;
   int i,j;
   int first_SN = All.N_SNe;
@@ -261,7 +262,7 @@ void neighbour_loop(int mode,int iSN,double *out_weight)
 
 
         // printf("%g %g -> %g\n",All.SN_position_x[iSN],P[j].Pos[0],wk_p[0]);
-        double x=P[j].Mass/(P[j].Mass+m_shock*wk);
+        // double x=P[j].Mass/(P[j].Mass+m_shock*wk);
         // double v=sqrt(P[j].Vel[0]*P[j].Vel[0]+P[j].Vel[1]*P[j].Vel[1]
                      // +P[j].Vel[2]*P[j].Vel[2]);
 // #ifdef WINDS
@@ -319,9 +320,9 @@ void neighbour_loop(int mode,int iSN,double *out_weight)
 
         /* make sure to update the conserved variables correctly: 
            mass and momentum are easy, energy is non-trivial */
-        double egy_old = 0;
+        // double egy_old = 0;
         // internal energy //
-        egy_old += mtot * (wt_j*SphP[j].InternalEnergy + wt_i*e_shock/m_shock);
+        // egy_old += mtot * (wt_j*SphP[j].InternalEnergy + wt_i*e_shock/m_shock);
         double pos_new_xyz[3], dp[3];
         /* for periodic boxes, we need to (arbitrarily) pick one position as our coordinate center. we pick i. then everything defined in 
             position differences relative to i. the final position will be appropriately box-wrapped after these operations are completed */
@@ -331,20 +332,20 @@ void neighbour_loop(int mode,int iSN,double *out_weight)
 #endif
         for(k=0;k<3;k++) {pos_new_xyz[k] = pos[k] + wt_j * dp[k];}
 
-        for(k=0;k<3;k++)
-        {
-            egy_old += mtot*wt_j * 0.5 * P[j].Vel[k]*P[j].Vel[k]*All.cf_a2inv; // kinetic energy (j) //
-            egy_old += mtot*wt_i * 0.5 * 0; // kinetic energy (i) //
-            // gravitational energy terms need to be added (including work for moving particles 'together') //
-            // Egrav = m*g*h = m * (-grav_acc) * (position relative to zero point) //
-            egy_old += mtot*wt_j * (pos[k]+dp[k] - pos_new_xyz[k])*All.cf_atime 
-                        * (-P[j].GravAccel[k])*All.cf_a2inv; // work (j) //
-            egy_old += mtot*wt_i * (pos[k]       - pos_new_xyz[k])*All.cf_atime 
-                        * (-0)*All.cf_a2inv;                 // work (i) //
-#ifdef HYDRO_MESHLESS_FINITE_VOLUME
-            SphP[j].GravWorkTerm[k] = 0; // since we're accounting for the work above and dont want to accidentally double-count //
-#endif
-        }
+        // for(k=0;k<3;k++)
+        // {
+            // egy_old += mtot*wt_j * 0.5 * P[j].Vel[k]*P[j].Vel[k]*All.cf_a2inv; // kinetic energy (j) //
+            // egy_old += mtot*wt_i * 0.5 * 0; // kinetic energy (i) //
+            // // gravitational energy terms need to be added (including work for moving particles 'together') //
+            // // Egrav = m*g*h = m * (-grav_acc) * (position relative to zero point) //
+            // egy_old += mtot*wt_j * (pos[k]+dp[k] - pos_new_xyz[k])*All.cf_atime 
+            //             * (-P[j].GravAccel[k])*All.cf_a2inv; // work (j) //
+            // egy_old += mtot*wt_i * (pos[k]       - pos_new_xyz[k])*All.cf_atime 
+            //             * (-0)*All.cf_a2inv;                 // work (i) //
+// #ifdef HYDRO_MESHLESS_FINITE_VOLUME
+//             SphP[j].GravWorkTerm[k] = 0; // since we're accounting for the work above and dont want to accidentally double-count //
+// #endif
+        // }
         SphP[j].InternalEnergy     =   wt_j*SphP[j].InternalEnergy 
                                      + wt_i*(e_shock / m_shock);
         
@@ -367,10 +368,10 @@ void neighbour_loop(int mode,int iSN,double *out_weight)
 
         /* correct our 'guess' for the internal energy with the residual 
            from exact energy conservation */
-        double egy_new = mtot * SphP[j].InternalEnergy;
-        for(k=0;k<3;k++) {egy_new += mtot * 0.5*P[j].Vel[k]*P[j].Vel[k]*All.cf_a2inv;}
-        egy_new = (egy_old - egy_new) / mtot; /* this residual needs to be put into the thermal energy */
-        if(egy_new < -0.5*SphP[j].InternalEnergy) egy_new = -0.5 * SphP[j].InternalEnergy;
+        // double egy_new = mtot * SphP[j].InternalEnergy;
+        // for(k=0;k<3;k++) {egy_new += mtot * 0.5*P[j].Vel[k]*P[j].Vel[k]*All.cf_a2inv;}
+        // egy_new = (egy_old - egy_new) / mtot; /* this residual needs to be put into the thermal energy */
+        // if(egy_new < -0.5*SphP[j].InternalEnergy) egy_new = -0.5 * SphP[j].InternalEnergy;
         //SphP[j].InternalEnergy += egy_new; SphP[j].InternalEnergyPred += egy_new;//test during splits
         if(SphP[j].InternalEnergyPred<0.5*SphP[j].InternalEnergy) SphP[j].InternalEnergyPred=0.5*SphP[j].InternalEnergy;
         
@@ -445,3 +446,77 @@ void neighbour_loop(int mode,int iSN,double *out_weight)
 
     myfree(Ngblist);
 } // void neighbour_loop
+
+
+
+int count_lines_in_file(char * filename)
+{
+    int number_of_lines = 0;
+
+    FILE * file = fopen(filename, "r");
+
+    char current_char;
+    char previous_char = '\n';
+    while ((current_char = fgetc(file)) != EOF)
+    {
+      if (current_char == '\n')
+      {
+        if (current_char != previous_char)
+        {
+          ++number_of_lines;
+        }
+      }
+      previous_char = current_char;
+    }
+    if (previous_char != '\n')
+    {
+      ++number_of_lines;
+    }
+
+    fclose(file);
+
+    return number_of_lines;
+}
+
+
+void read_SNe_file(char * filename, int N_SNe, 
+  double *SN_time, double *SN_mass, double *SN_mass_Z, double *wind_mass)
+{
+    if(N_SNe <= 0) return;
+
+    FILE * file = fopen(filename, "r");
+
+    double _SN_time;
+    double _initial_mass;
+    double _SN_mass;
+    double _SN_mass_Z;
+    double _wind_mass;
+
+    char tmp[1024];
+    fgets(tmp, sizeof(tmp), file); // header line
+
+    int i;
+    for(i=0; i<N_SNe; ++i)
+    {
+        fscanf(file,"%le %le %le %le %le\n",
+                &_SN_time, &_initial_mass, 
+                &_SN_mass, &_SN_mass_Z,
+                &_wind_mass );
+
+        // the original file was in *reverse* time order
+        // (because it was sorted by stellar initial mass)
+        SN_time[  (N_SNe-1) - i]   = _SN_time   / All.UnitTime_in_s;
+        SN_mass[  (N_SNe-1) - i]   = _SN_mass   / All.UnitMass_in_g;
+        SN_mass_Z[(N_SNe-1) - i]   = _SN_mass_Z / All.UnitMass_in_g;
+        wind_mass[(N_SNe-1) - i]   = _wind_mass / All.UnitMass_in_g;
+    }
+
+    fclose(file);
+
+    double first_SN_time = SN_time[0];
+    for(i=0; i<N_SNe; ++i)
+    {
+      SN_time[i] -= first_SN_time;
+    }
+    SN_time[0] = 3e10 / All.UnitTime_in_s; // don't add the first SN at exactly t=0;
+}

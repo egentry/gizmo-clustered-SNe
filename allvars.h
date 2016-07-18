@@ -1162,6 +1162,10 @@ extern struct global_data_all_processes
 #ifdef GRACKLE
     char GrackleDataFile[100];
 #endif
+
+#ifdef GENTRY_FB
+    char SNeDataFile[128];
+#endif
     
   /*! table with desired output times */
   double OutputListTimes[MAXLEN_OUTPUTLIST];
@@ -1311,9 +1315,9 @@ extern struct global_data_all_processes
     double* SN_mass;
     double* SN_mass_Z;
     
-#ifdef WINDS
+// #ifdef WINDS
     double* wind_mass;
-#endif
+// #endif
 
 #endif
 

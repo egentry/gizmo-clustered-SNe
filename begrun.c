@@ -329,9 +329,13 @@ void begrun(void)
 
 
 #ifdef GENTRY_FB
-  // to do - have this be read from my text files
 
-    All.N_SNe = 11;
+    All.N_SNe = count_lines_in_file(All.SNeDataFile) - 1;
+    if(ThisTask == 0)
+    {
+      printf("total N_SNe: %d \n", All.N_SNe);
+    }
+    
 
     All.SN_position_x = (double*) malloc(All.N_SNe*sizeof(double));
     All.SN_position_y = (double*) malloc(All.N_SNe*sizeof(double));
@@ -347,61 +351,29 @@ void begrun(void)
     }
 
 
-    All.SN_time     = (double*) malloc(All.N_SNe * sizeof(double));
-    All.SN_time[ 0] = 3e+10       / All.UnitTime_in_s; // if it's exactly 0, it'll get skipped
-    All.SN_time[ 1] = 1.99471e+13 / All.UnitTime_in_s;
-    All.SN_time[ 2] = 8.02558e+13 / All.UnitTime_in_s;
-    All.SN_time[ 3] = 9.92043e+13 / All.UnitTime_in_s;
-    All.SN_time[ 4] = 1.22073e+14 / All.UnitTime_in_s;
-    All.SN_time[ 5] = 2.36641e+14 / All.UnitTime_in_s;
-    All.SN_time[ 6] = 2.46039e+14 / All.UnitTime_in_s;
-    All.SN_time[ 7] = 4.41575e+14 / All.UnitTime_in_s;
-    All.SN_time[ 8] = 5.08510e+14 / All.UnitTime_in_s;
-    All.SN_time[ 9] = 8.57144e+14 / All.UnitTime_in_s;
-    All.SN_time[10] = 9.02104e+14 / All.UnitTime_in_s;
-
-
-    All.SN_mass     = (double*) malloc(All.N_SNe * sizeof(double));
-    All.SN_mass[ 0] = 1.32339e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 1] = 2.99848e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 2] = 3.02113e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 3] = 3.10834e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 4] = 3.14317e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 5] = 2.51504e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 6] = 2.46495e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 7] = 2.07013e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 8] = 1.93268e+34 / All.UnitMass_in_g;
-    All.SN_mass[ 9] = 1.46705e+34 / All.UnitMass_in_g;
-    All.SN_mass[10] = 1.42763e+34 / All.UnitMass_in_g;
-
-
+    All.SN_time       = (double*) malloc(All.N_SNe * sizeof(double));
+    All.SN_mass       = (double*) malloc(All.N_SNe * sizeof(double));
     All.SN_mass_Z     = (double*) malloc(All.N_SNe * sizeof(double));
-    All.SN_mass_Z[ 0] = 1.31011e+34 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 1] = 2.32765e+34 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 2] = 9.76778e+33 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 3] = 7.73080e+33 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 4] = 6.48351e+33 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 5] = 2.56464e+33 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 6] = 2.39965e+33 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 7] = 1.41690e+33 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 8] = 1.41690e+33 / All.UnitMass_in_g;
-    All.SN_mass_Z[ 9] = 1.41690e+33 / All.UnitMass_in_g;
-    All.SN_mass_Z[10] = 1.41690e+33 / All.UnitMass_in_g;
 
-#ifdef WINDS
+// #ifdef WINDS
     All.wind_mass     = (double*) malloc(All.N_SNe * sizeof(double));    
-    All.wind_mass[ 0] = 9.89864e+34 / All.UnitMass_in_g;
-    All.wind_mass[ 1] = 5.47184e+34 / All.UnitMass_in_g;
-    All.wind_mass[ 2] = 2.04665e+34 / All.UnitMass_in_g;
-    All.wind_mass[ 3] = 1.41344e+34 / All.UnitMass_in_g;
-    All.wind_mass[ 4] = 9.42052e+33 / All.UnitMass_in_g;
-    All.wind_mass[ 5] = 3.62558e+33 / All.UnitMass_in_g;
-    All.wind_mass[ 6] = 3.50378e+33 / All.UnitMass_in_g;
-    All.wind_mass[ 7] = 0           / All.UnitMass_in_g;
-    All.wind_mass[ 8] = 0           / All.UnitMass_in_g;
-    All.wind_mass[ 9] = 0           / All.UnitMass_in_g;
-    All.wind_mass[10] = 0           / All.UnitMass_in_g;
-#endif
+// #endif
+
+    read_SNe_file(All.SNeDataFile, All.N_SNe,
+                  All.SN_time, All.SN_mass, All.SN_mass_Z, All.wind_mass);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    {
+      int i;
+      for(i=0; i<All.N_SNe; ++i)
+      {
+        if(ThisTask == 0)
+        {
+          printf("CHECK: SN %d at time %e [code units]\n", i, All.SN_time[i]);
+        }
+      }
+    }
 
 #endif
 }
@@ -1065,6 +1037,12 @@ void read_parameter_file(char *fname)
 #ifdef GRACKLE
         strcpy(tag[nt], "GrackleDataFile");
         addr[nt] = All.GrackleDataFile;
+        id[nt++] = STRING;
+#endif
+
+#ifdef GENTRY_FB
+        strcpy(tag[nt], "SNeDataFile");
+        addr[nt] = All.SNeDataFile;
         id[nt++] = STRING;
 #endif
         
