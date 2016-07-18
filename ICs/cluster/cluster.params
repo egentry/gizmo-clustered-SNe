@@ -22,7 +22,7 @@ MaxMemSize                         3200
 PartAllocFactor                    3
 BufferSize                         100
 TimeBegin                          0
-TimeMax                            100
+TimeMax                            1
 ComovingIntegrationOn              0
 Omega0                             0
 OmegaLambda                        0
@@ -30,15 +30,15 @@ OmegaBaryon                        0
 HubbleParam                        1
 BoxSize                            500
 OutputListOn                       0
-TimeBetSnapshot                    1
+TimeBetSnapshot                    .1
 TimeOfFirstSnapshot                0
-TimeBetStatistics                  1
+TimeBetStatistics                  .1
 NumFilesPerSnapshot                1
 NumFilesWrittenInParallel          1
 ErrTolIntAccuracy                  0.002
 CourantFac                         0.05
 MaxRMSDisplacementFac              0.1
-MaxSizeTimestep                    0.1
+MaxSizeTimestep                    0.001
 MinSizeTimestep                    1e-08
 ErrTolTheta                        0.7
 ErrTolForceAcc                     0.0015
@@ -64,12 +64,11 @@ SofteningDiskMaxPhys               0.003
 SofteningBulgeMaxPhys              0.003
 SofteningStarsMaxPhys              0.003
 SofteningBndryMaxPhys              0.003
-InitGasTemp                        0
+InitGasTemp                        10000
 MinGasTemp                         10
 InitMetallicity					   1
 MetalCoolingOn					   1
 UVBackgroundOn					   1
 GrackleDataFile					   grackle/input/CloudyData_UVB=HM2012.h5
-
 
 

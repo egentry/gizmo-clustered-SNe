@@ -6,7 +6,7 @@
 #PBS -q hyper
 #
 #PBS -M egentry@ucsc.edu
-#PBS -m e
+# #PBS -m e
 #
 #PBS -S /bin/bash
 #
