@@ -1,11 +1,15 @@
 % Example compile-time options:
-%  (HYDRO_MESHLESS_FINITE_MASS is optional, replace with your
-%   choice of hydro/mhd options)
 %
 %        PERIODIC 
 %        HYDRO_MESHLESS_FINITE_MASS
 %        NOGRAVITY 
 %        HAVE_HDF5  
+%
+%        GENTRY_FB
+%        GRACKLE_OPTS
+%        COOLING
+%        GRACKLE
+%        GRACKLE_CHEMISTRY=0
 %
 InitCondFile                       ./ICs/single_cooling/single_ics
 OutputDir                          ./output/single_cooling
@@ -32,7 +36,7 @@ BoxSize                            200
 OutputListOn                       0
 TimeBetSnapshot                    .05
 TimeOfFirstSnapshot                0
-TimeBetStatistics                  .05
+TimeBetStatistics                  .01
 NumFilesPerSnapshot                1
 NumFilesWrittenInParallel          1
 ErrTolIntAccuracy                  0.002
