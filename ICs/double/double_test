@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+#PBS -l nodes=1:ppn=32
+#PBS -l walltime=24:00:00
+#
+#PBS -q hyper
+#
+#PBS -M egentry@ucsc.edu
+# #PBS -m e
+#
+#PBS -S /bin/bash
+#
+cd $PBS_O_WORKDIR
+
+source $HOME/.bashrc
+export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
+time mpirun -np 32 ./ICs/double/GIZMO ICs/double/double.params
