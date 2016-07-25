@@ -11,7 +11,7 @@
 %        GRACKLE
 %        GRACKLE_CHEMISTRY=0
 %
-InitCondFile                       ./ICs/double_cooling/double_ics
+InitCondFile                       ./ICs/double_cooling/double_cooling_ics
 OutputDir                          ./output/double_cooling
 RestartFile                        restart
 SnapshotFileBase                   snapshot

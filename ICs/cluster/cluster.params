@@ -1,11 +1,15 @@
 % Example compile-time options:
-%  (HYDRO_MESHLESS_FINITE_MASS is optional, replace with your
-%   choice of hydro/mhd options)
 %
 %        PERIODIC 
 %        HYDRO_MESHLESS_FINITE_MASS
 %        NOGRAVITY 
 %        HAVE_HDF5  
+%
+%        GENTRY_FB
+%        GRACKLE_OPTS
+%
+%
+%
 %
 InitCondFile                       ./ICs/cluster/cluster_ics
 OutputDir                          ./output/cluster
@@ -22,7 +26,7 @@ MaxMemSize                         3200
 PartAllocFactor                    3
 BufferSize                         100
 TimeBegin                          0
-TimeMax                            1
+TimeMax                            1.0
 ComovingIntegrationOn              0
 Omega0                             0
 OmegaLambda                        0
@@ -32,7 +36,7 @@ BoxSize                            500
 OutputListOn                       0
 TimeBetSnapshot                    .1
 TimeOfFirstSnapshot                0
-TimeBetStatistics                  .1
+TimeBetStatistics                  .05
 NumFilesPerSnapshot                1
 NumFilesWrittenInParallel          1
 ErrTolIntAccuracy                  0.002
