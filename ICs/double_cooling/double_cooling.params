@@ -52,7 +52,7 @@ MaxNumNgbDeviation                 0.05
 ArtBulkViscConst                   1
 UnitLength_in_cm                   3.08568e+18
 UnitMass_in_g                      1.989e+33
-UnitVelocity_in_cm_per_s           100000
+UnitVelocity_in_cm_per_s           97779.22216731282
 GravityConstantInternal            0
 MaxHsml                            2000
 MinGasHsmlFractional               0
