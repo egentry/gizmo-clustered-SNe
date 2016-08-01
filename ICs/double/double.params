@@ -26,7 +26,7 @@ MaxMemSize                         3200
 PartAllocFactor                    3
 BufferSize                         100
 TimeBegin                          0
-TimeMax                            1.0
+TimeMax                            2.0
 ComovingIntegrationOn              0
 Omega0                             0
 OmegaLambda                        0
@@ -34,7 +34,7 @@ OmegaBaryon                        0
 HubbleParam                        1
 BoxSize                            200
 OutputListOn                       0
-TimeBetSnapshot                    .05
+TimeBetSnapshot                    .1
 TimeOfFirstSnapshot                0
 TimeBetStatistics                  .01
 NumFilesPerSnapshot                1

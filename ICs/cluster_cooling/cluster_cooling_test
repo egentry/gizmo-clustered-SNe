@@ -8,8 +8,8 @@
 #PBS -M egentry@ucsc.edu
 #PBS -m e
 #
-#PBS -e ./ICs/cluster/
-#PBS -o ./ICs/cluster/
+#PBS -e ./ICs/cluster_cooling/
+#PBS -o ./ICs/cluster_cooling/
 #
 #PBS -S /bin/bash
 #
@@ -17,4 +17,4 @@ cd $PBS_O_WORKDIR
 
 source $HOME/.bashrc
 export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
-time mpirun -np 32 ./ICs/cluster/GIZMO ICs/cluster/cluster.params
+time mpirun -np 32 ./ICs/cluster_cooling/GIZMO ICs/cluster_cooling/cluster_cooling.params

@@ -11,8 +11,8 @@
 %        GRACKLE
 %        GRACKLE_CHEMISTRY=0
 %
-InitCondFile                       ./ICs/single_cooling/single_cooling_ics
-OutputDir                          ./output/single_cooling
+InitCondFile                       ./ICs/cluster_cooling/cluster_cooling_ics
+OutputDir                          ./output/cluster_cooling
 RestartFile                        restart
 SnapshotFileBase                   snapshot
 OutputListFilename                 output_times.txt
@@ -26,15 +26,15 @@ MaxMemSize                         3200
 PartAllocFactor                    3
 BufferSize                         100
 TimeBegin                          0
-TimeMax                            2.0
+TimeMax                            40.0
 ComovingIntegrationOn              0
 Omega0                             0
 OmegaLambda                        0
 OmegaBaryon                        0
 HubbleParam                        1
-BoxSize                            200
+BoxSize                            400
 OutputListOn                       0
-TimeBetSnapshot                    .1
+TimeBetSnapshot                    .5
 TimeOfFirstSnapshot                0
 TimeBetStatistics                  .01
 NumFilesPerSnapshot                1
@@ -74,6 +74,6 @@ InitMetallicity					   1
 MetalCoolingOn					   1
 UVBackgroundOn					   1
 GrackleDataFile					   grackle/input/CloudyData_UVB=HM2012.h5
-SNeDataFile  					   ./ICs/single_cooling/1_SNe.dat
+SNeDataFile  					   ./ICs/cluster_cooling/11_SNe.dat
 
 

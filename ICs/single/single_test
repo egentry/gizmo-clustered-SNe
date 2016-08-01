@@ -6,7 +6,10 @@
 #PBS -q hyper
 #
 #PBS -M egentry@ucsc.edu
-# #PBS -m e
+#PBS -m e
+#
+#PBS -e ./ICs/single/
+#PBS -o ./ICs/single/
 #
 #PBS -S /bin/bash
 #
