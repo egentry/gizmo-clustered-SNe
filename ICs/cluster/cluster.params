@@ -70,10 +70,10 @@ SofteningStarsMaxPhys              0.003
 SofteningBndryMaxPhys              0.003
 InitGasTemp                        10000
 MinGasTemp                         10
-InitMetallicity					   1
-MetalCoolingOn					   1
-UVBackgroundOn					   1
-GrackleDataFile					   grackle/input/CloudyData_UVB=HM2012.h5
-SNeDataFile  					   ./ICs/cluster/11_SNe.dat
+InitMetallicity                    1
+MetalCoolingOn                     1
+UVBackgroundOn                     1
+GrackleDataFile                    grackle/input/CloudyData_UVB=HM2012.h5
+SNeDataFile                        ./ICs/cluster/11_SNe.dat
 
 
