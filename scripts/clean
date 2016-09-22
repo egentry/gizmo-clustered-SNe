@@ -1,6 +1,8 @@
 #!/bin/bash
 
-RUN_NAME=single_cooling
+RUN_NAME=$1
+
+echo cleaning: $RUN_NAME
 
 rm -f ICs/$RUN_NAME/*-usedvalues
 rm -f ICs/$RUN_NAME/*test.*

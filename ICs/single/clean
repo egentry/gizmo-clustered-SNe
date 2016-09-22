@@ -1,8 +1,0 @@
-#!/bin/bash
-
-RUN_NAME=single
-
-rm -f ICs/$RUN_NAME/*-usedvalues
-rm -f ICs/$RUN_NAME/*test.*
-rm -f output/$RUN_NAME/snapshot_*.hdf5
-rm -rf output/$RUN_NAME/restartfiles
