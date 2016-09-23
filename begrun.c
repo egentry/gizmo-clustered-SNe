@@ -370,7 +370,7 @@ void begrun(void)
       {
         if(ThisTask == 0)
         {
-          printf("CHECK: SN %d at time %e [code units]\n", i, All.SN_time[i]);
+          printf("CHECK: SN %d at time %e [code units] with mass %e [code units] \n", i, All.SN_time[i], All.SN_mass[i]);
         }
       }
     }
