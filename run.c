@@ -177,6 +177,7 @@ void run(void)
 
 
 
+
 void set_non_standard_physics_for_current_time(void)
 {
 #if defined(COOLING)
@@ -184,6 +185,8 @@ void set_non_standard_physics_for_current_time(void)
     IonizeParams();
 #endif
     
+
+
     
 }
 
@@ -201,8 +204,8 @@ void calculate_non_standard_physics(void)
 #endif
     
 #ifdef GENTRY_FB
-    //compute the actual SNe feedback
-    gentry_fb_calc();
+    // //compute the actual SNe feedback
+    // gentry_fb_calc();
 #endif
     
     

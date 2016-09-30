@@ -11,7 +11,7 @@
 %        GRACKLE
 %        GRACKLE_CHEMISTRY=0
 %
-InitCondFile                       ./ICs/cluster_cooling_150/cluster_cooling_150_ics
+%        InitCondFile                       ./ICs/cluster_cooling_150/cluster_cooling_150_ics
 OutputDir                          ./output/cluster_cooling_150
 RestartFile                        restart
 SnapshotFileBase                   snapshot
@@ -25,8 +25,8 @@ ResubmitCommand                    my-scriptfile
 MaxMemSize                         3200
 PartAllocFactor                    3
 BufferSize                         100
-TimeBegin                          0
-TimeMax                            0.001
+%        TimeBegin                          0
+%        TimeMax                            0.001
 ComovingIntegrationOn              0
 Omega0                             0
 OmegaLambda                        0
@@ -34,8 +34,8 @@ OmegaBaryon                        0
 HubbleParam                        1
 BoxSize                            400
 OutputListOn                       0
-TimeBetSnapshot                    .5
-TimeOfFirstSnapshot                0
+%        TimeBetSnapshot                    .5
+%        TimeOfFirstSnapshot                0
 TimeBetStatistics                  .01
 NumFilesPerSnapshot                1
 NumFilesWrittenInParallel          1
