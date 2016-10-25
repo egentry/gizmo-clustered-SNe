@@ -5,6 +5,7 @@ DEPEND
 DEPEND.bak
 GRACKLE_INFO
 .ipynb_checkpoints
+__pycache__
 
 
 temp.show-config
@@ -17,6 +18,10 @@ auto_show_flags.c
 ewald_spc_table_64_dbl.dat
 *.txt
 restartfiles
+cont
+*test.e*
+*test.o*
+*params.restart
 
 Make.config.machine
 
