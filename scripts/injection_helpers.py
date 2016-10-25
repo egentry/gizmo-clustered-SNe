@@ -5,11 +5,7 @@ import glob
 import numpy as np
 from scipy import stats
 
-from astropy import units as u
-from astropy import constants as const
-
-yr      = u.yr.to(u.s)
-M_solar = u.M_sun.to(u.g)
+from units import M_solar, m_proton, pc, yr, Myr, km, s, gamma
 
 default_SNe_datafile = "1D_data/25451948-485f-46fe-b87b-f4329d03b203_SNe.dat"
 
@@ -26,16 +22,24 @@ class Supernova(object):
 
 
 ##### FUNCTIONS ###########
+SNe_filename_format = "*SNe.dat"
+def get_SNe(SNe_dir, SNe_filename_format=SNe_filename_format):
+    """Load datafile from SNe_dir, parse into a list of Supernova objects"""
+    possible_SN_files = glob.glob(os.path.join(SNe_dir, SNe_filename_format))
 
-def get_SNe(SNe_datafile = default_SNe_datafile):
-    """Load SNe_datafile, parse into a list of Supernova objects"""
+    if len(possible_SN_files) == 0: 
+        raise FileNotFoundError("No SN data files found in {}".format(SNe_dir))
+    elif len(possible_SN_files) > 1:
+        raise RuntimeError("Too many SN data files found in {}".format(SNe_dir))
+    SN_file = possible_SN_files[0]
 
-    SN_data = np.loadtxt(SNe_datafile, ndmin=2)
+
+    SN_data = np.loadtxt(SN_file, ndmin=2)
     SN_data = SN_data[np.argsort(SN_data[:,0])]
 
     # change into the code units I'm using in GIZMO
     # Base units: Gyr, M_solar, pc
-    SN_times         = SN_data[:,0] / (1e6 * yr)
+    SN_times         = SN_data[:,0] / (Myr)
     SN_ejecta_mass   = SN_data[:,2] / M_solar
     SN_ejecta_mass_Z = SN_data[:,3] / M_solar
 
@@ -46,11 +50,9 @@ def get_SNe(SNe_datafile = default_SNe_datafile):
 
     return SNe
 
-SNe = get_SNe()
-
 
 def snapshot_number_from_basename(basename):
-    return int(basename.strip("snapshot_").strip(".hdf5"))
+    return int(basename.replace("snapshot_", "").replace(".hdf5", ""))
 
 def snapshot_basename_from_number(snapshot_number):
     return "snapshot_{:03d}.hdf5".format(snapshot_number)
@@ -68,7 +70,7 @@ def get_last_snapshot_file_in_dir(outputs_dir):
     return last_snapshot_file
     
 
-def which_SN_is_about_to_explode(current_time, tol=1e-4, SNe = SNe):
+def which_SN_is_about_to_explode(current_time, SNe, tol=1e-4):
     """Returns the *zero-indexed* number of the SNe about to explode"""
 
     SN_times = np.array([SN.time for SN in SNe])
@@ -113,7 +115,7 @@ def get_default_snapshot_spacing(params_file):
     raise RuntimeError("No lines found with `TimeBetSnapshot`")
 
 
-def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe=SNe):
+def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe):
     """There must be a SNe between `snapshot_file_after_SN` and the previous snapshot"""
 
 
@@ -133,8 +135,8 @@ def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe=SNe):
         time_after = f["Header"].attrs["Time"]    
 
 
-    SN_times = np.array([SN.time          for SN in SNe])
-    possible_SNe = np.where((SN_times > time_before) & (SN_times < time_after))[0]
+    SN_times = np.array([SN.time for SN in SNe])
+    possible_SNe = np.where((SN_times >= time_before) & (SN_times < time_after))[0]
     if possible_SNe.size == 0:
         raise RuntimeError("No SNe exploded between 2 most recent snapshots")
     elif possible_SNe.size > 1:
@@ -166,7 +168,7 @@ def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe=SNe):
         snapshot_spacing = (time_max - time_min) / num_snapshots
         
         print("InitCondFile                       {}".format(
-            os.path.join(*snapshot_file_after_SN.strip(".hdf5").split(os.sep)[1:])), file=f
+            os.path.join(*snapshot_file_after_SN.replace(".hdf5", "").split(os.sep)[1:])), file=f
         )
 
         
