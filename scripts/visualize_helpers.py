@@ -10,26 +10,26 @@ from units import M_solar, m_proton, pc, yr, Myr, gamma
 ##########################
 snapshot_filename_format = "snapshot_???.hdf5"
 
-def get_snapshot_filenames(snapshot_dir, 
+def get_snapshot_filenames(outputs_dir, 
                            snapshot_filename_format=snapshot_filename_format):
 
-    return sorted(glob.glob(os.path.join(snapshot_dir, snapshot_filename_format)))
+    return sorted(glob.glob(os.path.join(outputs_dir, snapshot_filename_format)))
 
 
-def load_snapshots(snapshot_dir):
+def load_snapshots(outputs_dir):
     unit_base = {
         "UnitLength_in_cm" : (pc),
         "UnitVelocity_in_cm_per_s"   : (pc / Myr),
         "UnitMass_in_g"   : (M_solar)
     }
 
-    snapshot_filenames = get_snapshot_filenames(snapshot_dir)
+    snapshot_filenames = get_snapshot_filenames(outputs_dir)
 
     n_files_ready = len(snapshot_filenames)
     if n_files_ready == 0:
-        raise FileNotFoundError("No snapshots found in {}".format(snapshot_dir))
+        raise FileNotFoundError("No snapshots found in {}".format(outputs_dir))
 
-    ts = yt.load(os.path.join(snapshot_dir, snapshot_filename_format),
+    ts = yt.load(os.path.join(outputs_dir, snapshot_filename_format),
                  unit_base=unit_base)
     return ts
 
@@ -97,9 +97,9 @@ def total_internal_energy_of_snapshot(snapshot_filename):
 
 
 
-def map_to_all_snapshots(snapshot_dir, mapped_function):
+def map_to_all_snapshots(outputs_dir, mapped_function):
     """To do: option for multiprocessing map?"""
-    snapshot_filenames = get_snapshot_filenames(snapshot_dir)
+    snapshot_filenames = get_snapshot_filenames(outputs_dir)
 
     results = np.array(list(map(mapped_function, snapshot_filenames)), ndmin=1)
 

@@ -7,7 +7,7 @@
 int main(int argc, char** argv) {
     // // // This all needs to be run from the scripts folder, to get the python correct
     // // // argv[1] should be $end_file, relative to the scripts folder
-    // // // argv[2] should be $inputs_dir, relative to the scripts folder
+    // // // argv[2] should be $run_dir, relative to the scripts folder
 
 
     if(argc < 3)
@@ -30,12 +30,6 @@ int main(int argc, char** argv) {
 
     if (world_rank==0)
     {
-        // const char * filename = argv[1];
-
-        // create file, so that if the python fails, the outer loop will end
-        // FILE * file = fopen(filename, "w");
-        // fclose(file);
-
 
         int status = 0;
         char command[256] = "python prepare_for_restart.py ";
@@ -54,12 +48,6 @@ int main(int argc, char** argv) {
 
         printf("calling: '%s' \n", command);
         status = system(command);
-
-        // if(status==0)
-        // {
-        //     // if python executed successfully, don't stop the outer loop
-        //     status = remove(filename);
-        // }
 
     }
 

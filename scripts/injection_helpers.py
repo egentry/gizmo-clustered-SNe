@@ -137,19 +137,16 @@ class Params(object):
 
 
 
-
-
-
 ##### FUNCTIONS ###########
 SNe_filename_format = "*SNe.dat"
-def get_SNe(SNe_dir, SNe_filename_format=SNe_filename_format):
-    """Load datafile from SNe_dir, parse into a list of Supernova objects"""
-    possible_SN_files = glob.glob(os.path.join(SNe_dir, SNe_filename_format))
+def get_SNe(inputs_dir, SNe_filename_format=SNe_filename_format):
+    """Load datafile from inputs_dir, parse into a list of Supernova objects"""
+    possible_SN_files = glob.glob(os.path.join(inputs_dir, SNe_filename_format))
 
     if len(possible_SN_files) == 0: 
-        raise FileNotFoundError("No SN data files found in {}".format(SNe_dir))
+        raise FileNotFoundError("No SN data files found in {}".format(inputs_dir))
     elif len(possible_SN_files) > 1:
-        raise RuntimeError("Too many SN data files found in {}".format(SNe_dir))
+        raise RuntimeError("Too many SN data files found in {}".format(inputs_dir))
     SN_file = possible_SN_files[0]
 
 
@@ -302,8 +299,9 @@ def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe):
         
 
 # clean this up (copied from a notebook)
-def create_snapshot_with_new_SN(inputs_dir):
-    outputs_dir = inputs_dir.replace("ICs", "output")
+def create_snapshot_with_new_SN(run_dir):
+    inputs_dir  = os.path.join(run_dir, "inputs")
+    outputs_dir = os.path.join(run_dir, "outputs")
     
     SNe = get_SNe(inputs_dir)
     SN_times           = np.array([SN.time          for SN in SNe])
@@ -320,7 +318,7 @@ def create_snapshot_with_new_SN(inputs_dir):
     # this next line should throw a RuntimeError if you shouldn't add a new SN now
     i_SN = which_SN_is_about_to_explode(f_old["Header"].attrs["Time"], SNe)
 
-    snapshot_file_new_tmp = os.path.join(os.path.dirname(snapshot_file_new), "tmp.hdf5")
+    snapshot_file_new_tmp = os.path.join(outputs_dir, "tmp.hdf5")
     f_new = h5py.File(snapshot_file_new_tmp, mode="w")
 
     f_new.create_group("Header")
@@ -419,19 +417,20 @@ def create_snapshot_with_new_SN(inputs_dir):
     os.rename(snapshot_file_new_tmp, snapshot_file_new)
 
 
-def create_restart_type_file(dir, restart_type, basename="RESTART"):
+def create_restart_type_file(inputs_dir, restart_type, basename="RESTART"):
     if restart_type not in {entry.value for entry in RestartType}:
         raise ValueError("restart_type must be a valid value of RestartType enum")
 
-    with open(os.path.join(dir, basename), mode="w") as f:
+    with open(os.path.join(inputs_dir, basename), mode="w") as f:
         print("RESTART_TYPE={}".format(restart_type), file=f)
 
 ################### Wrapped functions (clean these up)
 
 
 
-def create_restart_params_wrapped(inputs_dir):
-    outputs_dir = inputs_dir.replace("ICs", "output")
+def create_restart_params_wrapped(run_dir):
+    inputs_dir  = os.path.join(run_dir, "inputs")
+    outputs_dir = os.path.join(run_dir, "outputs")
 
     SNe = get_SNe(inputs_dir)
 
