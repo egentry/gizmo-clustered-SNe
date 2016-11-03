@@ -4,10 +4,17 @@ import os
 import glob
 import numpy as np
 from scipy import stats
+from enum import Enum, unique
+
+from collections import OrderedDict
+
 
 from units import M_solar, m_proton, pc, yr, Myr, km, s, gamma
+from astropy import units as u
 
 default_SNe_datafile = "1D_data/25451948-485f-46fe-b87b-f4329d03b203_SNe.dat"
+
+
 
 
 ##### CLASSES ###########
@@ -18,6 +25,118 @@ class Supernova(object):
         self.time          = time
         self.ejecta_mass   = ejecta_mass
         self.ejecta_mass_Z = ejecta_mass_Z
+
+@unique
+class RestartType(Enum):
+    RESTARTFILE = 1
+    SNAPSHOTS = 2
+
+
+class Params(object):
+    types = OrderedDict([
+    ("OutputDir",                          str),
+    ("RestartFile",                        str),
+    ("SnapshotFileBase",                   str),
+    ("OutputListFilename",                 str),
+    ("ICFormat",                           int),
+    ("SnapFormat",                         int),
+    ("TimeLimitCPU",                       int),
+    ("CpuTimeBetRestartFile",              int),
+    ("ResubmitOn",                         int),
+    ("ResubmitCommand",                    str),
+    ("MaxMemSize",                         int),
+    ("PartAllocFactor",                    float),
+    ("BufferSize",                         float),
+    ("ComovingIntegrationOn",              float),
+    ("Omega0",                             float),
+    ("OmegaLambda",                        float),
+    ("OmegaBaryon",                        float),
+    ("HubbleParam",                        float),
+    ("BoxSize",                            float),
+    ("OutputListOn",                       int),
+    ("TimeBetStatistics",                  float),
+    ("NumFilesPerSnapshot",                int),
+    ("NumFilesWrittenInParallel",          int),
+    ("ErrTolIntAccuracy",                  float),
+    ("CourantFac",                         float),
+    ("MaxRMSDisplacementFac",              float),
+    ("MaxSizeTimestep",                    float),
+    ("MinSizeTimestep",                    float),
+    ("ErrTolTheta",                        float),
+    ("ErrTolForceAcc",                     float),
+    ("TreeDomainUpdateFrequency",          float),
+    ("DesNumNgb",                          int),
+    ("MaxNumNgbDeviation",                 float),
+    ("ArtBulkViscConst",                   float),
+    ("UnitLength_in_cm",                   float),
+    ("UnitMass_in_g",                      float),
+    ("UnitVelocity_in_cm_per_s",           float),
+    ("GravityConstantInternal",            float),
+    ("MaxHsml",                            float),
+    ("MinGasHsmlFractional",               float),
+    ("SofteningGas",                       float),
+    ("SofteningHalo",                      float),
+    ("SofteningDisk",                      float),
+    ("SofteningBulge",                     float),
+    ("SofteningStars",                     float),
+    ("SofteningBndry",                     float),
+    ("SofteningGasMaxPhys",                float),
+    ("SofteningHaloMaxPhys",               float),
+    ("SofteningDiskMaxPhys",               float),
+    ("SofteningBulgeMaxPhys",              float),
+    ("SofteningStarsMaxPhys",              float),
+    ("SofteningBndryMaxPhys",              float),
+    ("InitGasTemp",                        float),
+    ("MinGasTemp",                         float),
+    ("InitMetallicity",                    int),
+    ("MetalCoolingOn",                     int),
+    ("UVBackgroundOn",                     int),
+    ("GrackleDataFile",                    str),
+    ("SNeDataFile",                        str),
+    ("InitCondFile",                       str),
+    ("TimeBegin",                          float),
+    ("TimeMax",                            float),
+    ("TimeBetSnapshot",                    float),
+    ("TimeOfFirstSnapshot",                float),
+    ])
+    
+    def __init__(self, **kwargs):
+        for key in kwargs:
+            if key not in self.types.keys():
+                raise RuntimeError("'{}' identifier not recognized".format(key))
+        for key in self.types.keys():
+            if key not in kwargs:
+                raise RuntimeError("missing entry for: {}".format(key))
+        self.__dict__ = kwargs
+        
+
+    @classmethod
+    def from_filename(cls, filename):
+        param_dict = {}
+        with open(filename, mode="r") as f:
+            for line in f:
+                line = line.rstrip()
+                if len(line) == 0:
+                    continue
+                if line[0] is "%":
+                    continue
+                key, value = line.split()
+                param_dict[key] = cls.types[key](value)
+        p = Params(**param_dict)
+        return p
+                        
+
+    def to_file(self, file):
+        """file must be a file stream, not a filename!"""
+        for key in self.__class__.types:
+            value = self.__dict__[key]
+            print("{0:35s}{1:<45}".format(key, value), file=file)
+        
+    def copy(self):
+        return Params(self.__dict__)
+
+
+
 
 
 
@@ -59,15 +178,17 @@ def snapshot_basename_from_number(snapshot_number):
 
 
 def get_last_snapshot_file_in_dir(outputs_dir):
-    snapshot_files = glob.glob(os.path.join(outputs_dir, "snapshot_*.hdf5"))
-    snapshot_numbers = [snapshot_number_from_basename(os.path.basename(f)) 
-                        for f in snapshot_files]
-    
-    i_max = np.argmax(snapshot_numbers)
+    return get_ith_snapshot_file_in_dir(outputs_dir, -1)
 
-    last_snapshot_file   = snapshot_files[i_max]
+def get_ith_snapshot_file_in_dir(outputs_dir, i):
+    snapshot_files = np.array(glob.glob(os.path.join(outputs_dir, "snapshot_*.hdf5")))
+    snapshot_numbers = np.array([snapshot_number_from_basename(os.path.basename(f)) 
+                        for f in snapshot_files])
+
+    sorted_indices = np.argsort(snapshot_numbers)
+    snapshot_files = snapshot_files[sorted_indices]
     
-    return last_snapshot_file
+    return snapshot_files[i]
     
 
 def which_SN_is_about_to_explode(current_time, SNe, tol=1e-4):
@@ -179,3 +300,153 @@ def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe):
         print("TimeBetSnapshot                    {}".format(snapshot_spacing), file=f)
         print("TimeOfFirstSnapshot                {}".format(time_min + snapshot_spacing), file=f)
         
+
+# clean this up (copied from a notebook)
+def create_snapshot_with_new_SN(inputs_dir):
+    outputs_dir = inputs_dir.replace("ICs", "output")
+    
+    SNe = get_SNe(inputs_dir)
+    SN_times           = np.array([SN.time          for SN in SNe])
+    SN_ejecta_masses   = np.array([SN.ejecta_mass   for SN in SNe])
+    SN_ejecta_masses_Z = np.array([SN.ejecta_mass_Z for SN in SNe])
+
+    snapshot_file_old = get_last_snapshot_file_in_dir(outputs_dir)
+    snapshot_number_old = snapshot_number_from_basename(os.path.basename(snapshot_file_old))
+
+    snapshot_file_new = os.path.join(outputs_dir, snapshot_basename_from_number(snapshot_number_old+1))
+
+
+    f_old = h5py.File(snapshot_file_old, mode="r")
+    # this next line should throw a RuntimeError if you shouldn't add a new SN now
+    i_SN = which_SN_is_about_to_explode(f_old["Header"].attrs["Time"], SNe)
+
+    snapshot_file_new_tmp = os.path.join(os.path.dirname(snapshot_file_new), "tmp.hdf5")
+    f_new = h5py.File(snapshot_file_new_tmp, mode="w")
+
+    f_new.create_group("Header")
+    f_new.create_group("PartType0")
+
+    SN = SNe[i_SN]
+
+
+
+    average_particle_mass = np.sum(f_old["PartType0"]["Masses"]) / f_old["Header"].attrs["NumPart_Total"][0]
+    # print(average_particle_mass)
+
+    num_new_particles_needed = int(np.ceil(SN.ejecta_mass / average_particle_mass))
+    # print(num_new_particles_needed)
+
+    mass_per_new_particle = SN.ejecta_mass / num_new_particles_needed
+    # print(mass_per_new_particle)
+
+
+    for key in f_old["Header"].attrs:
+        f_new["Header"].attrs[key] = f_old["Header"].attrs[key]
+
+        
+    # This is necessary since h5py attrs don't allow slicing/element-wise changes
+    new_NumPart_ThisFile = f_new["Header"].attrs["NumPart_ThisFile"]
+    new_NumPart_Total    = f_new["Header"].attrs["NumPart_Total"]
+
+    new_NumPart_ThisFile[0] += num_new_particles_needed
+    new_NumPart_Total[0]    += num_new_particles_needed
+
+    f_new["Header"].attrs["NumPart_ThisFile"] = new_NumPart_ThisFile
+    f_new["Header"].attrs["NumPart_Total"]    = new_NumPart_Total
+
+    old_total_particles = f_old["Header"].attrs["NumPart_Total"][0]
+    new_total_particles = f_new["Header"].attrs["NumPart_Total"][0]
+
+
+    # Make other changes
+    f_new["Header"].attrs["Time"] = SN.time + 1e-3 # 1 kyr after the SN
+
+
+    # check data
+    for key in f_new["Header"].attrs:
+        # print(key, ":", f_new["Header"].attrs[key])
+        pass
+
+    for key in f_old["Header"].attrs:
+        # print(key, ":", f_old["Header"].attrs[key]) 
+        pass
+
+    for key in f_old["PartType0"].keys():    
+        new_shape = (new_total_particles,) + f_old["PartType0"][key].shape[1:]
+        dtype = f_old["PartType0"][key].dtype
+        
+        f_new["PartType0"].require_dataset(key, new_shape, dtype=dtype)
+        
+        f_new["PartType0"][key][:old_total_particles] = f_old["PartType0"][key]
+        
+        # print(key, ":", f_new["PartType0"][key])
+        
+    r_SN = 2 # pc    
+    injection_kernel = stats.norm(loc=f_new["Header"].attrs["BoxSize"]/2, scale=r_SN)
+    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,0] = injection_kernel.rvs(size=num_new_particles_needed)
+    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,1] = injection_kernel.rvs(size=num_new_particles_needed)
+    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,2] = injection_kernel.rvs(size=num_new_particles_needed)
+
+    f_new["PartType0"]["Density"][-num_new_particles_needed:] = np.mean(f_old["PartType0"]["Density"]) # EDIT: will this mess with my yt plots of this snapshot?
+
+    f_new["PartType0"]["ElectronAbundance"][-num_new_particles_needed:] = 1.0 # EDIT: unused?
+
+    energy_in_correct_units = 1e51 * u.erg.to(u.pc**2 * u.M_sun / u.Myr**2)
+    f_new["PartType0"]["InternalEnergy"][-num_new_particles_needed:] = energy_in_correct_units/SN.ejecta_mass
+
+    f_new["PartType0"]["Masses"][-num_new_particles_needed:] = mass_per_new_particle
+
+    f_new["PartType0"]["Metallicity"][-num_new_particles_needed:] = SN.ejecta_mass / SN.ejecta_mass_Z
+
+    f_new["PartType0"]["NeutralHydrogenAbundance"][-num_new_particles_needed:] = 0.0 # EDIT: unused?
+
+    f_new["PartType0"]["ParticleChildIDsNumber"][-num_new_particles_needed:] = 0 # is this right?
+
+    f_new["PartType0"]["ParticleIDGenerationNumber"][-num_new_particles_needed:] = 0 # is this right?
+
+    new_particle_ids = np.max(f_old["PartType0"]["ParticleIDs"]) + 1 + np.arange(num_new_particles_needed)
+    f_new["PartType0"]["ParticleIDs"][-num_new_particles_needed:] = new_particle_ids
+
+    f_new["PartType0"]["SmoothingLength"][-num_new_particles_needed:] = np.mean(f_old["PartType0"]["SmoothingLength"])
+
+    f_new["PartType0"]["Velocities"][-num_new_particles_needed:,0] = 0
+    f_new["PartType0"]["Velocities"][-num_new_particles_needed:,1] = 0
+    f_new["PartType0"]["Velocities"][-num_new_particles_needed:,2] = 0
+
+
+    f_old.close()
+    f_new.close()
+    os.rename(snapshot_file_new_tmp, snapshot_file_new)
+
+
+def create_restart_type_file(dir, restart_type, basename="RESTART"):
+    if restart_type not in {entry.value for entry in RestartType}:
+        raise ValueError("restart_type must be a valid value of RestartType enum")
+
+    with open(os.path.join(dir, basename), mode="w") as f:
+        print("RESTART_TYPE={}".format(restart_type), file=f)
+
+################### Wrapped functions (clean these up)
+
+
+
+def create_restart_params_wrapped(inputs_dir):
+    outputs_dir = inputs_dir.replace("ICs", "output")
+
+    SNe = get_SNe(inputs_dir)
+
+    snapshot_file_after_SN = get_last_snapshot_file_in_dir(outputs_dir)
+    snapshot_number_after_SN = snapshot_number_from_basename(os.path.basename(snapshot_file_after_SN))
+
+    snapshot_file_before_SN = snapshot_file_after_SN.replace("{:03}".format(snapshot_number_after_SN),
+                                                             "{:03}".format(snapshot_number_after_SN-1),)
+
+    ## check that we should have added a SN between the most recent 2 snapshots
+    ## throws a RuntimeError if that isn't true
+    with h5py.File(snapshot_file_before_SN) as f:
+        _ = which_SN_is_about_to_explode(f["Header"].attrs["Time"], SNe)
+
+
+    create_restart_params(snapshot_file_after_SN, inputs_dir, SNe)
+
+

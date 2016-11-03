@@ -19,6 +19,7 @@ ewald_spc_table_64_dbl.dat
 *.txt
 restartfiles
 cont
+end
 *test.e*
 *test.o*
 *params.restart

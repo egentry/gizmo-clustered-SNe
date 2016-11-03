@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+#PBS -l nodes=2:ppn=16
+#PBS -l walltime=48:00:00
+#
+#PBS -q hyper
+#
+#PBS -M egentry@ucsc.edu
+#PBS -m e
+#
+#PBS -e ./ICs/double_cooling/
+#PBS -o ./ICs/double_cooling/
+#
+#PBS -S /bin/bash
+#
+cd $PBS_O_WORKDIR
+
+source $HOME/.bashrc
+export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
+
+# number of processors
+NP=32
+
+INPUT_DIR=./ICs/double_cooling
+OUTPUT_DIR=./output/double_cooling
+
+COUNTER=0
+while [ ! -f $INPUT_DIR/end ]; do
+	echo Counter: $COUNTER
+	let COUNTER+=1
+
+	touch $INPUT_DIR/end
+
+	# FROM_CHECKPOINT can be "--from-checkpoint', which is passed in at qsub time
+	# It forces the code to *always* restart from checkpoints, rather than restart files
+	# In practice, this only matters on the first loop, and is useful if your most recent checkpoint
+	# is newer than your most recent restartfile
+	echo from_checkpoint $FROM_CHECKPOINT
+
+	cd scripts
+	source activate py35
+	mpirun -np $NP ./add_SN ../$INPUT_DIR/end ../$INPUT_DIR $FROM_CHECKPOINT
+	source deactivate
+	cd $PBS_O_WORKDIR
+
+	# make sure we don't run the code if the python failed, or decided the code shouldn't be run
+	if [ -f $INPUT_DIR/end]
+		then break
+	fi
+
+	# Adds the variable RESTART_TYPE, which tells gizmo whether to restart from checkpoints or restart files
+	source  $INPUT_DIR/RESTART 
+	echo restart_type $RESTART_TYPE
+
+	time mpirun -np $NP $INPUT_DIR/GIZMO $INPUT_DIR/double_cooling.params.restart $RESTART_TYPE
+
+done
