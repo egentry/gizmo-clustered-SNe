@@ -6,10 +6,6 @@ import yt
 
 from units import M_solar, m_proton, pc, yr, Myr, gamma
 
-## To Do:
-##  - combine all of the "total X of all snapshots" into one map routine
-
-
 
 ##########################
 snapshot_filename_format = "snapshot_???.hdf5"
@@ -69,6 +65,35 @@ def total_radial_momentum_of_snapshot(snapshot_filename):
     
     f.close()
     return mom * M_solar * pc / (Myr)
+
+
+def total_kinetic_energy_of_snapshot(snapshot_filename):
+    f = h5py.File(snapshot_filename, mode="r")
+    masses_shape = f["PartType0"]["Masses"].shape
+    new_shape = masses_shape + (1,)
+
+    E_kin = 0.5 * np.sum(np.array(f["PartType0"]["Velocities"], dtype=float)**2 \
+    * np.reshape(f["PartType0"]["Masses"], new_shape), dtype=float)
+    
+    f.close()
+    return E_kin * M_solar * (pc / Myr)**2
+
+
+def total_internal_energy_of_snapshot(snapshot_filename):
+    f = h5py.File(snapshot_filename, mode="r")
+    masses_shape = f["PartType0"]["Masses"].shape
+    new_shape = masses_shape + (1,)
+
+    E_int = np.sum(f["PartType0"]["InternalEnergy"] \
+    * f["PartType0"]["Masses"], dtype=float)
+    
+    f.close()
+    return E_int * M_solar * (pc / Myr)**2
+
+def total_internal_energy_of_snapshot(snapshot_filename):
+    E_tot =   total_internal_energy_of_snapshot(snapshot_filename) \
+            + total_kinetic_energy_of_snapshot(snapshot_filename)
+    return E_tot
 
 
 
