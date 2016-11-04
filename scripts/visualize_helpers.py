@@ -43,51 +43,45 @@ def get_snapshot_times(ts):
 
 
 def total_mass_of_snapshot(snapshot_filename):
-    f = h5py.File(snapshot_filename, mode="r")
-
-    total_mass = np.sum(f["PartType0"]["Masses"], dtype=float)
-    
-    f.close()
-    
+    with h5py.File(snapshot_filename, mode="r") as f:
+        total_mass = np.sum(f["PartType0"]["Masses"], dtype=float)
+        
     return total_mass
 
 
 def total_radial_momentum_of_snapshot(snapshot_filename):
-    f = h5py.File(snapshot_filename, mode="r")
-    masses_shape = f["PartType0"]["Masses"].shape
-    new_shape = masses_shape + (1,)
+    with h5py.File(snapshot_filename, mode="r") as f:
+        masses_shape = f["PartType0"]["Masses"].shape
+        new_shape = masses_shape + (1,)
 
-    r_hat = f["PartType0"]["Coordinates"] - (f["Header"].attrs["BoxSize"]/2)
-    r_hat = r_hat / (np.sum(r_hat**2, axis=1, dtype=float).reshape(new_shape))**.5
+        r_hat = f["PartType0"]["Coordinates"] - (f["Header"].attrs["BoxSize"]/2)
+        r_hat = r_hat / (np.sum(r_hat**2, axis=1, dtype=float).reshape(new_shape))**.5
+        
+        mom = np.sum(r_hat * f["PartType0"]["Velocities"] \
+        * np.reshape(f["PartType0"]["Masses"], new_shape), dtype=float)
     
-    mom = np.sum(r_hat * f["PartType0"]["Velocities"] \
-    * np.reshape(f["PartType0"]["Masses"], new_shape), dtype=float)
-    
-    f.close()
     return mom * M_solar * pc / (Myr)
 
 
 def total_kinetic_energy_of_snapshot(snapshot_filename):
-    f = h5py.File(snapshot_filename, mode="r")
-    masses_shape = f["PartType0"]["Masses"].shape
-    new_shape = masses_shape + (1,)
+    with h5py.File(snapshot_filename, mode="r") as f:
+        masses_shape = f["PartType0"]["Masses"].shape
+        new_shape = masses_shape + (1,)
 
-    E_kin = 0.5 * np.sum(np.array(f["PartType0"]["Velocities"], dtype=float)**2 \
-    * np.reshape(f["PartType0"]["Masses"], new_shape), dtype=float)
+        E_kin = 0.5 * np.sum(np.array(f["PartType0"]["Velocities"], dtype=float)**2 \
+        * np.reshape(f["PartType0"]["Masses"], new_shape), dtype=float)
     
-    f.close()
     return E_kin * M_solar * (pc / Myr)**2
 
 
 def total_internal_energy_of_snapshot(snapshot_filename):
-    f = h5py.File(snapshot_filename, mode="r")
-    masses_shape = f["PartType0"]["Masses"].shape
-    new_shape = masses_shape + (1,)
+    with h5py.File(snapshot_filename, mode="r") as f:
+        masses_shape = f["PartType0"]["Masses"].shape
+        new_shape = masses_shape + (1,)
 
-    E_int = np.sum(f["PartType0"]["InternalEnergy"] \
-    * f["PartType0"]["Masses"], dtype=float)
+        E_int = np.sum(np.array(f["PartType0"]["InternalEnergy"], dtype=float) \
+        * np.array(f["PartType0"]["Masses"], dtype=float), dtype=float)
     
-    f.close()
     return E_int * M_solar * (pc / Myr)**2
 
 def total_energy_of_snapshot(snapshot_filename):
@@ -98,7 +92,6 @@ def total_energy_of_snapshot(snapshot_filename):
 
 
 def map_to_all_snapshots(outputs_dir, mapped_function):
-    """To do: option for multiprocessing map?"""
     snapshot_filenames = get_snapshot_filenames(outputs_dir)
 
     results = np.array(list(map(mapped_function, snapshot_filenames)), ndmin=1)

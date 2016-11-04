@@ -21,7 +21,8 @@ export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
 # number of processors
 NP=32
 
-RUN_DIR=./runs/cluster
+RUN_NAME=cluster
+RUN_DIR=./runs/$RUN_NAME
 
 INPUTS_DIR=$RUN_DIR/inputs
 
@@ -45,7 +46,7 @@ while [ ! -f $INPUTS_DIR/end ]; do
 	cd $PBS_O_WORKDIR
 
 	# make sure we don't run the code if the python failed, or decided the code shouldn't be run
-	if [ -f $INPUTS_DIR/end]
+	if [ -f $INPUTS_DIR/end ]
 		then break
 	fi
 
@@ -53,6 +54,6 @@ while [ ! -f $INPUTS_DIR/end ]; do
 	source  $INPUTS_DIR/RESTART 
 	echo restart_type $RESTART_TYPE
 
-	time mpirun -np $NP $INPUTS_DIR/GIZMO $INPUTS_DIR/cluster.params.restart $RESTART_TYPE
+	time mpirun -np $NP $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE
 
 done
