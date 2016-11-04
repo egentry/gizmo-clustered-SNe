@@ -45,7 +45,7 @@ while [ ! -f $INPUTS_DIR/end ]; do
 	cd $PBS_O_WORKDIR
 
 	# make sure we don't run the code if the python failed, or decided the code shouldn't be run
-	if [ -f $INPUTS_DIR/end]
+	if [ -f $INPUTS_DIR/end ]
 		then break
 	fi
 

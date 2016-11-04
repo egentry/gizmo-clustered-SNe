@@ -4,7 +4,7 @@ import os
 import glob
 import numpy as np
 from scipy import stats
-from enum import Enum, unique
+from enum import IntEnum, unique
 
 from collections import OrderedDict
 
@@ -27,7 +27,7 @@ class Supernova(object):
         self.ejecta_mass_Z = ejecta_mass_Z
 
 @unique
-class RestartType(Enum):
+class RestartType(IntEnum):
     RESTARTFILE = 1
     SNAPSHOTS = 2
 
@@ -419,7 +419,7 @@ def create_snapshot_with_new_SN(run_dir):
 
 def create_restart_type_file(inputs_dir, restart_type, basename="RESTART"):
     if restart_type not in {entry.value for entry in RestartType}:
-        raise ValueError("restart_type must be a valid value of RestartType enum")
+        raise ValueError("restart_type must be a valid value of RestartType enum; instead was {}".format(restart_type))
 
     with open(os.path.join(inputs_dir, basename), mode="w") as f:
         print("RESTART_TYPE={}".format(restart_type), file=f)

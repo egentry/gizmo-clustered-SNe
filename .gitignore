@@ -20,6 +20,7 @@ ewald_spc_table_64_dbl.dat
 restartfiles
 cont
 end
+RESTART
 *test.e*
 *test.o*
 *params.restart

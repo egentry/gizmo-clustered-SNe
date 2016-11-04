@@ -90,7 +90,7 @@ def total_internal_energy_of_snapshot(snapshot_filename):
     f.close()
     return E_int * M_solar * (pc / Myr)**2
 
-def total_internal_energy_of_snapshot(snapshot_filename):
+def total_energy_of_snapshot(snapshot_filename):
     E_tot =   total_internal_energy_of_snapshot(snapshot_filename) \
             + total_kinetic_energy_of_snapshot(snapshot_filename)
     return E_tot
