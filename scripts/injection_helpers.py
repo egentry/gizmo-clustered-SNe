@@ -8,9 +8,12 @@ from enum import IntEnum, unique
 
 from collections import OrderedDict
 
-
 from units import M_solar, m_proton, pc, yr, Myr, km, s, gamma
 from astropy import units as u
+
+from visualize_helpers import total_mass_of_snapshot, \
+                              total_internal_energy_of_snapshot, \
+                              total_kinetic_energy_of_snapshot
 
 default_SNe_datafile = "1D_data/25451948-485f-46fe-b87b-f4329d03b203_SNe.dat"
 
@@ -86,7 +89,6 @@ class Params(object):
     ("SofteningBulgeMaxPhys",              float),
     ("SofteningStarsMaxPhys",              float),
     ("SofteningBndryMaxPhys",              float),
-    ("InitGasTemp",                        float),
     ("MinGasTemp",                         float),
     ("InitMetallicity",                    int),
     ("MetalCoolingOn",                     int),
@@ -99,6 +101,8 @@ class Params(object):
     ("TimeBetSnapshot",                    float),
     ("TimeOfFirstSnapshot",                float),
     ])
+
+
     
     def __init__(self, **kwargs):
         for key in kwargs:
@@ -355,19 +359,19 @@ def create_snapshot_with_new_SN(run_dir):
     old_total_particles = f_old["Header"].attrs["NumPart_Total"][0]
     new_total_particles = f_new["Header"].attrs["NumPart_Total"][0]
 
+    print("old_total_particles: ", old_total_particles)
 
     # Make other changes
     f_new["Header"].attrs["Time"] = SN.time + 1e-3 # 1 kyr after the SN
 
 
-    # check data
-    for key in f_new["Header"].attrs:
+    # # # check data
+    # for key in f_new["Header"].attrs:
         # print(key, ":", f_new["Header"].attrs[key])
-        pass
 
-    for key in f_old["Header"].attrs:
+    # for key in f_old["Header"].attrs:
         # print(key, ":", f_old["Header"].attrs[key]) 
-        pass
+
 
     for key in f_old["PartType0"].keys():    
         new_shape = (new_total_particles,) + f_old["PartType0"][key].shape[1:]
@@ -378,6 +382,8 @@ def create_snapshot_with_new_SN(run_dir):
         f_new["PartType0"][key][:old_total_particles] = f_old["PartType0"][key]
         
         # print(key, ":", f_new["PartType0"][key])
+
+
         
     r_SN = 2 # pc    
     injection_kernel = stats.norm(loc=f_new["Header"].attrs["BoxSize"]/2, scale=r_SN)
@@ -412,6 +418,7 @@ def create_snapshot_with_new_SN(run_dir):
     f_new["PartType0"]["Velocities"][-num_new_particles_needed:,2] = 0
 
 
+
     f_old.close()
     f_new.close()
     os.rename(snapshot_file_new_tmp, snapshot_file_new)
@@ -423,6 +430,59 @@ def create_restart_type_file(inputs_dir, restart_type, basename="RESTART"):
 
     with open(os.path.join(inputs_dir, basename), mode="w") as f:
         print("RESTART_TYPE={}".format(restart_type), file=f)
+
+
+def snapshot_to_energy_file(snapshot_filename, energy_filename):
+    """Takes a snapshot file, calculates the relevant entries for the GIZMO energy files,
+    and then adds the appropriate row to the energy file.
+    
+    Note: Appends the energy information; doesn't gaurentee correct placement in time"""
+    
+    with h5py.File(snapshot_filename, "r") as snapshot_file:
+        time = snapshot_file["Header"].attrs["Time"]
+
+        particle_types = sorted([keyjjj
+                                 for key in snapshot_file.keys()
+                                 if "PartType" in key])
+
+        
+    N_particle_types = 6
+    int_energy = np.zeros(N_particle_types, dtype=float)
+    pot_energy = np.zeros(N_particle_types, dtype=float)
+    kin_energy = np.zeros(N_particle_types, dtype=float)
+    masses     = np.zeros(N_particle_types, dtype=float)
+        
+    for i, particle_type in enumerate(particle_types):
+        masses[i] = total_mass_of_snapshot(snapshot_filename,
+                                               particle_type=particle_type)
+        
+        int_energy[i] = total_internal_energy_of_snapshot(snapshot_filename,
+                                                              particle_type=particle_type)
+        
+        kin_energy[i] = total_kinetic_energy_of_snapshot(snapshot_filename,
+                                                              particle_type=particle_type)
+        
+        # to do:
+        #  - create a way to determine the grav. potential energy
+        #  - create a flag for whether a simulation is/isn't using gravity
+        #  - output potential energy, conditional on that flag
+        pot_energy[i] = 0
+        
+    formatter = "{:<20.14f} " + " ".join(["{:18.10e}"]*27)
+    with open(energy_filename, mode="a") as energy_file:
+        print(formatter.format(time,
+                               int_energy.sum(), pot_energy.sum(), kin_energy.sum(),
+                               int_energy[0], pot_energy[0], kin_energy[0],
+                               int_energy[1], pot_energy[1], kin_energy[1],
+                               int_energy[2], pot_energy[2], kin_energy[2],
+                               int_energy[3], pot_energy[3], kin_energy[3],
+                               int_energy[4], pot_energy[4], kin_energy[4],
+                               int_energy[5], pot_energy[5], kin_energy[5],
+                               *masses,
+                               ), file=energy_file)
+        
+        
+        
 
 ################### Wrapped functions (clean these up)
 

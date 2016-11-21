@@ -68,7 +68,6 @@ SofteningDiskMaxPhys               0.003
 SofteningBulgeMaxPhys              0.003
 SofteningStarsMaxPhys              0.003
 SofteningBndryMaxPhys              0.003
-InitGasTemp                        10000
 MinGasTemp                         10
 InitMetallicity                    1
 MetalCoolingOn                     1
