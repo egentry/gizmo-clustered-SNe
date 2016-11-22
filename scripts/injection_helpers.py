@@ -3,7 +3,7 @@ import shutil
 import os
 import glob
 import numpy as np
-from scipy import stats
+from scipy import stats, interpolate
 from enum import IntEnum, unique
 
 from collections import OrderedDict
@@ -103,20 +103,34 @@ class Params(object):
     ("TimeOfFirstSnapshot",                float),
     ])
 
+    types_MHD = OrderedDict([
+    ("UnitMagneticField_in_gauss",           float),
+
+    ])
 
     
-    def __init__(self, **kwargs):
+    def __init__(self, with_MHD=False, **kwargs):
+        self.with_MHD = with_MHD
         for key in kwargs:
-            if key not in self.types.keys():
+            if key not in (set(self.types.keys()) | set(self.types_MHD.keys())):
                 raise RuntimeError("'{}' identifier not recognized".format(key))
         for key in self.types.keys():
             if key not in kwargs:
                 raise RuntimeError("missing entry for: {}".format(key))
-        self.__dict__ = kwargs
+        if self.with_MHD:
+            for key in self.types_MHD.keys():
+                if key not in kwargs:
+                    raise RuntimeError("missing entry for: {}".format(key))
+        self.__dict__.update(kwargs)
         
 
     @classmethod
     def from_filename(cls, filename):
+        if "mhd" in filename:
+            with_MHD = True
+        else:
+            with_MHD = False
+
         param_dict = {}
         with open(filename, mode="r") as f:
             for line in f:
@@ -126,8 +140,11 @@ class Params(object):
                 if line[0] is "%":
                     continue
                 key, value = line.split()
-                param_dict[key] = cls.types[key](value)
-        p = Params(**param_dict)
+                if key in cls.types:
+                    param_dict[key] = cls.types[key](value)
+                else:
+                    param_dict[key] = cls.types_MHD[key](value)
+        p = Params(with_MHD=with_MHD, **param_dict)
         return p
                         
 
@@ -138,7 +155,7 @@ class Params(object):
             print("{0:35s}{1:<45}".format(key, value), file=file)
         
     def copy(self):
-        return Params(self.__dict__)
+        return Params(with_MHD=self.with_MHD, **self.__dict__)
 
 
 
@@ -419,6 +436,34 @@ def create_snapshot_with_new_SN(run_dir):
     f_new["PartType0"]["Velocities"][-num_new_particles_needed:,2] = 0
 
 
+    if "MagneticField" in set(f_old["PartType0"]):
+        with_MHD = True
+
+        # find `n_neighbors` particles closest to origin
+        n_neighbors = 100
+        coords = f_old["PartType0"]["Coordinates"].value - f_old["Header"].attrs["BoxSize"]/2
+        Bs = f_old["PartType0"]["MagneticField"].value
+        dist = (coords**2).sum(axis=1)
+        arg_part = np.argpartition(dist, n_neighbors)
+        interpolate_from = arg_part[:n_neighbors]
+
+        # now interpolate from those `n_neighbors` particles
+        interp = interpolate.LinearNDInterpolator(coords[interpolate_from],
+                                                  Bs[interpolate_from])
+
+        # For now, interpolate all the the origin
+        # In the future, maybe interpolate to their real locations?
+        #   - I think that would still be divergence free, if you use a linear interpolator?
+        B_new = interp([0,0,0])
+
+        f_new["PartType0"]["MagneticField"  ][-num_new_particles_needed:] = B_new
+
+        f_new["PartType0"]["DivergenceOfMagneticField"  ][-num_new_particles_needed:] = 0.0 # unused, I think
+        f_new["PartType0"]["DivBcleaningFunctionPhi"    ][-num_new_particles_needed:] = 0.0 # unused, I think
+        f_new["PartType0"]["DivBcleaningFunctionGradPhi"][-num_new_particles_needed:] = 0.0 # unused, I think
+
+
+
 
     f_old.close()
     f_new.close()
@@ -442,7 +487,7 @@ def snapshot_to_energy_file(snapshot_filename, energy_filename):
     with h5py.File(snapshot_filename, "r") as snapshot_file:
         time = snapshot_file["Header"].attrs["Time"]
 
-        particle_types = sorted([keyjjj
+        particle_types = sorted([key
                                  for key in snapshot_file.keys()
                                  if "PartType" in key])
 
