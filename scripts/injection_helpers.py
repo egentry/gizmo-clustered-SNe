@@ -89,6 +89,7 @@ class Params(object):
     ("SofteningBulgeMaxPhys",              float),
     ("SofteningStarsMaxPhys",              float),
     ("SofteningBndryMaxPhys",              float),
+    ("InitGasTemp",                        float),
     ("MinGasTemp",                         float),
     ("InitMetallicity",                    int),
     ("MetalCoolingOn",                     int),
