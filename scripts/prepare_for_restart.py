@@ -6,11 +6,12 @@ import numpy as np
 
 
 from injection_helpers import create_snapshot_with_new_SN, \
-    create_restart_params_wrapped, \
+    create_restart_params, \
     get_ith_snapshot_file_in_dir, \
     get_SNe, \
     create_restart_type_file, \
     Params, \
+    snapshot_to_energy_file, \
     RestartType
 
 
@@ -36,8 +37,21 @@ if __name__ == "__main__":
     inputs_dir  = os.path.join(args.run_dir, "inputs")
     outputs_dir = os.path.join(args.run_dir, "outputs")
 
+    print("inputs_dir: ", inputs_dir)
+
+    SNe = get_SNe(inputs_dir)
+    SN_times = np.array([SN.time for SN in SNe])
+
     restart_params_filename = glob.glob(os.path.join(inputs_dir, "*params.restart"))
-    assert(len(restart_params_filename)==1)
+    if len(restart_params_filename) == 0:
+        print("Warning: no restart params file found; auto-generating")
+        create_restart_params(inputs_dir, outputs_dir, SNe)
+        restart_params_filename = glob.glob(os.path.join(inputs_dir, "*params.restart"))
+
+
+    elif len(restart_params_filename) > 1:
+        raise RuntimeError("Too many restart params files found")
+
     restart_params_filename = restart_params_filename[0]
     current_params = Params.from_filename(restart_params_filename)
     t_max = current_params.TimeMax
@@ -47,9 +61,6 @@ if __name__ == "__main__":
     last_snapshot_filename = get_ith_snapshot_file_in_dir(outputs_dir, -1)
     with h5py.File(last_snapshot_filename, mode="r") as f:
         t_current = f["Header"].attrs["Time"]
-        
-    SNe = get_SNe(inputs_dir)
-    SN_times = np.array([SN.time for SN in SNe])
 
     t_tol = .5e-3
 
@@ -100,7 +111,7 @@ if __name__ == "__main__":
         if np.sum((t_current - 1e-3 >= SN_times) & (t_current > SN_times)) != 1:
             raise RuntimeError("Can't find a single SN about to occur")
 
-        create_restart_params_wrapped(args.run_dir)
+        create_restart_params(inputs_dir, outputs_dir, SNe)
 
         create_restart_type_file(inputs_dir, RestartType.SNAPSHOTS)
         os.remove(args.end_file)
@@ -116,7 +127,10 @@ if __name__ == "__main__":
             raise RuntimeError("Can't find a single SN about to occur")
 
         create_snapshot_with_new_SN(args.run_dir)
-        create_restart_params_wrapped(args.run_dir)
+        new_snapshot_filename = get_ith_snapshot_file_in_dir(outputs_dir, -1)
+        energy_filename = os.path.join(outputs_dir, "energy.txt")
+        snapshot_to_energy_file(new_snapshot_filename, energy_filename)
+        create_restart_params(inputs_dir, outputs_dir, SNe)
 
         create_restart_type_file(inputs_dir, RestartType.SNAPSHOTS)
         os.remove(args.end_file)

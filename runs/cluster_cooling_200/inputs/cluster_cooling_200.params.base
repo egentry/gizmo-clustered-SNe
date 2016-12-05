@@ -11,7 +11,6 @@
 %        GRACKLE
 %        GRACKLE_CHEMISTRY=0
 %
-%        InitCondFile                       ./runs/cluster_cooling_200/inputs/cluster_cooling_200_ics
 OutputDir                          ./runs/cluster_cooling_200/outputs
 RestartFile                        restart
 SnapshotFileBase                   snapshot
@@ -25,17 +24,13 @@ ResubmitCommand                    my-scriptfile
 MaxMemSize                         3200
 PartAllocFactor                    3
 BufferSize                         100
-%        TimeBegin                          0
-%        TimeMax                            0.001
 ComovingIntegrationOn              0
 Omega0                             0
 OmegaLambda                        0
 OmegaBaryon                        0
 HubbleParam                        1
-BoxSize                            400
+BoxSize                            600
 OutputListOn                       0
-%        TimeBetSnapshot                    .5
-%        TimeOfFirstSnapshot                0
 TimeBetStatistics                  .01
 NumFilesPerSnapshot                1
 NumFilesWrittenInParallel          1
@@ -75,5 +70,13 @@ MetalCoolingOn                     1
 UVBackgroundOn                     1
 GrackleDataFile                    grackle/input/CloudyData_UVB=HM2012.h5
 SNeDataFile                        ./runs/cluster_cooling_200/inputs/11_SNe.dat
+
+% % % Overwrite these every time a SN is added
+InitCondFile                       ./runs/cluster_cooling_200/inputs/cluster_cooling_200_ics
+TimeBegin                          0
+TimeMax                            0.001
+TimeOfFirstSnapshot                0
+% default (maximal) time between snapshots
+TimeBetSnapshot                    .5
 
 

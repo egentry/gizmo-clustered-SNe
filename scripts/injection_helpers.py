@@ -150,7 +150,11 @@ class Params(object):
 
     def to_file(self, file):
         """file must be a file stream, not a filename!"""
-        for key in self.__class__.types:
+        types = self.__class__.types.copy()
+        if self.with_MHD:
+            types.update(self.__class__.types_MHD)
+
+        for key in types:
             value = self.__dict__[key]
             print("{0:35s}{1:<45}".format(key, value), file=file)
         
@@ -239,34 +243,12 @@ def find_params_file_base(inputs_dir):
     return params_file_base
 
 
-def get_default_snapshot_spacing(params_file):
-    # try one iteration ignoring commented lines
-    for line in open(params_file, mode="r"):
-        if line[0] == "%":
-            continue
-        if "TimeBetSnapshot" in line:
-            return float(line.split()[-1])
-    
-    # now only look at commented lines if nothing was found in commented lines
-    for line in open(params_file, mode="r"):
-        if "TimeBetSnapshot" in line:
-            return float(line.split()[-1])
-        
-    raise RuntimeError("No lines found with `TimeBetSnapshot`")
+def create_restart_params(inputs_dir, outputs_dir, SNe):
+    """There must be a SN between the two most recent snapshots"""
 
+    snapshot_file_after_SN  = get_ith_snapshot_file_in_dir(outputs_dir, -1)
+    snapshot_file_before_SN = get_ith_snapshot_file_in_dir(outputs_dir, -2)
 
-def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe):
-    """There must be a SNe between `snapshot_file_after_SN` and the previous snapshot"""
-
-
-    snapshot_number_after_SN = snapshot_number_from_basename(
-                                    os.path.basename(snapshot_file_after_SN)
-                                )
-
-    snapshot_file_before_SN = snapshot_file_after_SN.replace(
-                                    "{:03}".format(snapshot_number_after_SN),
-                                    "{:03}".format(snapshot_number_after_SN-1),
-                                )
 
     with h5py.File(snapshot_file_before_SN) as f:
         time_before = f["Header"].attrs["Time"]
@@ -276,7 +258,7 @@ def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe):
 
 
     SN_times = np.array([SN.time for SN in SNe])
-    possible_SNe = np.where((SN_times >= time_before) & (SN_times < time_after))[0]
+    possible_SNe = np.argwhere((SN_times >= time_before) & (SN_times < time_after))[0]
     if possible_SNe.size == 0:
         raise RuntimeError("No SNe exploded between 2 most recent snapshots")
     elif possible_SNe.size > 1:
@@ -285,39 +267,37 @@ def create_restart_params(snapshot_file_after_SN, inputs_dir, SNe):
 
     params_file_base = find_params_file_base(inputs_dir)
     params_new_file = params_file_base.replace("base", "restart")
-    shutil.copy2(params_file_base, params_new_file)
+
+    params = Params.from_filename(params_file_base)
+
+        
+    if i_SN+1 < len(SNe):
+        time_of_previous_SN = SNe[i_SN].time
+        time_of_next_SN     = SNe[i_SN+1].time
+    else:
+        time_of_previous_SN = SNe[i_SN].time
+        time_of_next_SN     = 40
+
     
-    with open(params_new_file, mode="a") as f:
-        
-        if i_SN+1 < len(SNe):
-            time_of_previous_SN = SNe[i_SN].time
-            time_of_next_SN     = SNe[i_SN+1].time
-        else:
-            time_of_previous_SN = SNe[i_SN].time
-            time_of_next_SN     = 40
+    time_min = time_of_previous_SN + 1e-3
+    time_max = time_of_next_SN     - 1e-3
 
-        
-        time_min = time_of_previous_SN + 1e-3
-        time_max = time_of_next_SN     - 1e-3
+    
+    # determine number of snapshots 
+    # (minimum of 5, maximum set by TimeBetSnapshot in `*.params.base`)
+    num_snapshots = max(5, int((time_max - time_min)/params.TimeBetSnapshot))
 
-        
-        default_snapshot_spacing = get_default_snapshot_spacing(params_file_base)
-        
-        num_snapshots = max(5, int((time_max - time_min)/default_snapshot_spacing))
+    snapshot_spacing = (time_max - time_min) / num_snapshots
 
-        snapshot_spacing = (time_max - time_min) / num_snapshots
-        
-        print("InitCondFile                       {}".format(
-            os.path.join(*snapshot_file_after_SN.replace(".hdf5", "").split(os.sep)[1:])), file=f
-        )
 
-        
-        print("TimeBegin                          {}".format(time_min), file=f)
-        print("TimeMax                            {}".format(time_max), file=f)
+    params.TimeBetSnapshot = snapshot_spacing
+    params.InitCondFile = os.path.join(*snapshot_file_after_SN.replace(".hdf5", "").split(os.sep)[1:])
+    params.TimeBegin = time_min
+    params.TimeMax   = time_max
+    params.TimeOfFirstSnapshot = params.TimeBegin + params.TimeBetSnapshot
 
-        
-        print("TimeBetSnapshot                    {}".format(snapshot_spacing), file=f)
-        print("TimeOfFirstSnapshot                {}".format(time_min + snapshot_spacing), file=f)
+    with open(params_new_file, mode="w") as f:
+        params.to_file(f)
         
 
 # clean this up (copied from a notebook)
@@ -513,6 +493,11 @@ def snapshot_to_energy_file(snapshot_filename, energy_filename):
         #  - create a flag for whether a simulation is/isn't using gravity
         #  - output potential energy, conditional on that flag
         pot_energy[i] = 0
+
+    # convert to code units
+    int_energy /= M_solar * (pc / Myr)**2
+    kin_energy /= M_solar * (pc / Myr)**2
+    pot_energy /= M_solar * (pc / Myr)**2
         
     formatter = "{:<20.14f} " + " ".join(["{:18.10e}"]*27)
     with open(energy_filename, mode="a") as energy_file:
@@ -528,30 +513,5 @@ def snapshot_to_energy_file(snapshot_filename, energy_filename):
                                ), file=energy_file)
         
         
-        
-
-################### Wrapped functions (clean these up)
-
-
-
-def create_restart_params_wrapped(run_dir):
-    inputs_dir  = os.path.join(run_dir, "inputs")
-    outputs_dir = os.path.join(run_dir, "outputs")
-
-    SNe = get_SNe(inputs_dir)
-
-    snapshot_file_after_SN = get_last_snapshot_file_in_dir(outputs_dir)
-    snapshot_number_after_SN = snapshot_number_from_basename(os.path.basename(snapshot_file_after_SN))
-
-    snapshot_file_before_SN = snapshot_file_after_SN.replace("{:03}".format(snapshot_number_after_SN),
-                                                             "{:03}".format(snapshot_number_after_SN-1),)
-
-    ## check that we should have added a SN between the most recent 2 snapshots
-    ## throws a RuntimeError if that isn't true
-    with h5py.File(snapshot_file_before_SN) as f:
-        _ = which_SN_is_about_to_explode(f["Header"].attrs["Time"], SNe)
-
-
-    create_restart_params(snapshot_file_after_SN, inputs_dir, SNe)
 
 
