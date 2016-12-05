@@ -6,6 +6,8 @@ echo cleaning: $RUN_NAME
 
 rm -f  runs/$RUN_NAME/inputs/*-usedvalues
 rm -f  runs/$RUN_NAME/inputs/*test.*
+rm -f  runs/$RUN_NAME/inputs/RESTART
+rm -f  runs/$RUN_NAME/inputs/end
 rm -f  runs/$RUN_NAME/outputs/snapshot_*.hdf5
 rm -rf runs/$RUN_NAME/outputs/restartfiles
 rm -f  runs/$RUN_NAME/outputs/balance.txt
