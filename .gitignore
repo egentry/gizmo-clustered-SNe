@@ -23,6 +23,7 @@ end
 RESTART
 *test.e*
 *test.o*
+*test.byhand*
 *params.restart
 
 Make.config.machine

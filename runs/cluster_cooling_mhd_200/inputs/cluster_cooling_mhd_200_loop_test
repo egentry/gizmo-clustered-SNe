@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-#PBS -l nodes=2:ppn=16
+#PBS -l nodes=4:ppn=16
 #PBS -l walltime=48:00:00
 #
-#PBS -q hyper
+#PBS -q normal
 #
 #PBS -M egentry@ucsc.edu
 #PBS -m e
@@ -19,16 +19,26 @@ source $HOME/.bashrc
 export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
 
 # number of processors
-NP=32
+NP=64
 
 RUN_NAME=cluster_cooling_mhd_200
 RUN_DIR=./runs/$RUN_NAME
 
 INPUTS_DIR=$RUN_DIR/inputs
 
+OUTPUT_FILE=$INPUTS_DIR/${RUN_NAME}_loop_test.byhand.o${PBS_JOBID}
+ERROR_FILE=$INPUTS_DIR/${RUN_NAME}_loop_test.byhand.e${PBS_JOBID}
+
+touch $OUTPUT_FILE
+# touch $ERROR_FILE
+
+echo $PBS_NODEFILE >> $OUTPUT_FILE
+cat $PBS_NODEFILE >> $OUTPUT_FILE
+
+
 COUNTER=0
 while [ ! -f $INPUTS_DIR/end ]; do
-	echo Counter: $COUNTER
+	echo Counter: $COUNTER 1>>$OUTPUT_FILE 2>&1
 	let COUNTER+=1
 
 	touch $INPUTS_DIR/end
@@ -37,11 +47,11 @@ while [ ! -f $INPUTS_DIR/end ]; do
 	# It forces the code to *always* restart from checkpoints, rather than restart files
 	# In practice, this only matters on the first loop, and is useful if your most recent checkpoint
 	# is newer than your most recent restartfile
-	echo from_checkpoint $FROM_CHECKPOINT
+	echo from_checkpoint $FROM_CHECKPOINT 1>>$OUTPUT_FILE 2>&1
 
 	cd scripts
 	source activate py35
-	mpirun -np $NP ./add_SN ../$INPUTS_DIR/end ../$RUN_DIR $FROM_CHECKPOINT
+	mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode 16 ./add_SN ../$INPUTS_DIR/end ../$RUN_DIR $FROM_CHECKPOINT  1>>../$OUTPUT_FILE 2>&1
 	source deactivate
 	cd $PBS_O_WORKDIR
 
@@ -54,6 +64,6 @@ while [ ! -f $INPUTS_DIR/end ]; do
 	source  $INPUTS_DIR/RESTART 
 	echo restart_type $RESTART_TYPE
 
-	time mpirun -np $NP $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE
+	time mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode 16 $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE  1>>$OUTPUT_FILE 2>&1
 
 done
