@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#PBS -l nodes=4:ppn=16
+#PBS -l nodes=8:ppn=16
 #PBS -l walltime=48:00:00
 #
 #PBS -q normal
@@ -19,7 +19,7 @@ source $HOME/.bashrc
 export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
 
 # number of processors
-NP=64
+NP=128
 
 RUN_NAME=cluster_cooling_300
 RUN_DIR=./runs/$RUN_NAME
@@ -62,7 +62,7 @@ while [ ! -f $INPUTS_DIR/end ]; do
 
 	# Adds the variable RESTART_TYPE, which tells gizmo whether to restart from checkpoints or restart files
 	source  $INPUTS_DIR/RESTART 
-	echo restart_type $RESTART_TYPE
+	echo restart_type $RESTART_TYPE 1>>$OUTPUT_FILE 2>&1
 
 	time mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode 16 $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE  1>>$OUTPUT_FILE 2>&1
 
