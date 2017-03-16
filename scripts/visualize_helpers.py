@@ -99,3 +99,74 @@ def map_to_all_snapshots(outputs_dir, mapped_function):
     return results
 
 
+def yt_plot_saver(plot, plot_name, plots_dir="./",
+    # with_tight_layout=True,
+    ):
+    """ Takes a *yt plot* object, and saves it as png, eps, pdf
+
+    This can't be done simply by passing a matplotlib figure object,
+    because yt does its plotting in a way that doesn't play nice with matplotlib
+    (Even if you do plot.show(), the current figure is empty) 
+
+    
+    Inputs
+    ------
+        plot : yt plot object, not a matplotlib figure
+        plot_name : string
+        plots_dir : Optional(string)
+
+    Notes
+    -----
+        - assumes that any subdirectories in `plot_name` or `plots_dir` are 
+          correctly specified for the host OS (e.g. using the right directory
+          sepearating character such as `/` or `\`)
+
+        - `plots_dir` could be precombined with `plot_name`. They ultimately
+          get joined using an `os.path.join` call
+
+    """
+
+    print("Plotting: ", plot_name, "in", plots_dir)
+    
+    # if with_tight_layout:
+        # fig.tight_layout()
+    plot_filename = os.path.join(plots_dir, plot_name)
+    plot.save(plot_filename + ".eps")
+    plot.save(plot_filename + ".pdf")
+    plot.save(plot_filename + ".png")
+
+
+def mpl_plot_saver(fig, plot_name, plots_dir="./",
+    with_tight_layout=True,
+    ):
+    """ Takes a *matplotlib figure* object, and saves it as png, eps, pdf
+
+    This can't be used for plots created in yt.
+    See `visualize_helpers.yt_plot_saver` for details
+    
+    Inputs
+    ------
+        fig : matplotlib figure object
+        plot_name : string
+        plots_dir : Optional(string)
+
+    Notes
+    -----
+        - assumes that any subdirectories in `plot_name` or `plots_dir` are 
+          correctly specified for the host OS (e.g. using the right directory
+          sepearating character such as `/` or `\`)
+
+        - `plots_dir` could be precombined with `plot_name`. They ultimately
+          get joined using an `os.path.join` call
+
+    """
+
+    print("Plotting: ", plot_name, "in", plots_dir)
+    
+    if with_tight_layout:
+        fig.tight_layout()
+    plot_filename = os.path.join(plots_dir, plot_name)
+    fig.savefig(plot_filename + ".eps")
+    fig.savefig(plot_filename + ".pdf")
+    fig.savefig(plot_filename + ".png")
+
