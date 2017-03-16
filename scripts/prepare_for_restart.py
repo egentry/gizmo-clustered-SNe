@@ -77,7 +77,7 @@ if __name__ == "__main__":
         # probably stopped during normal operation
         print("Restarting without changing params or adding snapshots")
 
-        if t_current < t_min:
+        if t_current + t_tol < t_min:
             raise RuntimeError("Can't restart as is, if t_current<t_min (t_min={:.3}, t_current={:.3}".format(t_min, t_current))
 
         if np.isclose(t_current, t_min, rtol=0, atol=t_tol):

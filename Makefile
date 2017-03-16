@@ -614,7 +614,7 @@ FFTW_INCL= -I$(HOME)/local/fftw-2.1.5/include
 FFTW_LIBS= -L$(HOME)/local/fftw-2.1.5/lib
 HDF5INCL = -I$(HOME)/local/miniconda3/envs/hdf/include -DH5_USE_16_API
 HDF5LIB  = -L$(HOME)/local/miniconda3/envs/hdf/lib -lhdf5 -lz
-MPICHLIB = #
+MPICHLIB = -L$(HOME)/local/openmpi-2.0.2/lib -lgfortran
 
 tmp := $(shell cd grackle && csh ./configure)
 
