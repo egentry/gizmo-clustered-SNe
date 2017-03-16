@@ -13,13 +13,16 @@
 #
 #PBS -S /bin/bash
 #
+#PBS -N cluster_adiabatic
+#
+
 cd $PBS_O_WORKDIR
 
 source $HOME/.bashrc
 export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
 
 # number of processors
-NP=32
+NP=$(wc -l $PBS_NODEFILE | awk '{print $1}')
 
 RUN_NAME=cluster
 RUN_DIR=./runs/$RUN_NAME
@@ -51,7 +54,7 @@ while [ ! -f $INPUTS_DIR/end ]; do
 
 	cd scripts
 	source activate py35
-	mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode 16 ./add_SN ../$INPUTS_DIR/end ../$RUN_DIR $FROM_CHECKPOINT  1>>../$OUTPUT_FILE 2>&1
+	mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode $PBS_NUM_PPN ./add_SN ../$INPUTS_DIR/end ../$RUN_DIR $FROM_CHECKPOINT  1>>../$OUTPUT_FILE 2>&1
 	source deactivate
 	cd $PBS_O_WORKDIR
 
@@ -64,6 +67,6 @@ while [ ! -f $INPUTS_DIR/end ]; do
 	source  $INPUTS_DIR/RESTART 
 	echo restart_type $RESTART_TYPE 1>>$OUTPUT_FILE 2>&1
 
-	time mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode 16 $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE  1>>$OUTPUT_FILE 2>&1
+	time mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode $PBS_NUM_PPN $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE  1>>$OUTPUT_FILE 2>&1
 
 done
