@@ -385,11 +385,24 @@ def create_snapshot_with_new_SN(run_dir):
         
     r_SN = 2 # pc    
     injection_kernel = stats.norm(loc=f_new["Header"].attrs["BoxSize"]/2, scale=r_SN)
-    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,0] = injection_kernel.rvs(size=num_new_particles_needed)
-    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,1] = injection_kernel.rvs(size=num_new_particles_needed)
-    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,2] = injection_kernel.rvs(size=num_new_particles_needed)
+    xs = injection_kernel.rvs(size=num_new_particles_needed)
+    ys = injection_kernel.rvs(size=num_new_particles_needed)
+    zs = injection_kernel.rvs(size=num_new_particles_needed)
 
-    f_new["PartType0"]["Density"][-num_new_particles_needed:] = np.mean(f_old["PartType0"]["Density"]) # EDIT: will this mess with my yt plots of this snapshot?
+
+    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,0] = xs
+    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,1] = ys
+    f_new["PartType0"]["Coordinates"][-num_new_particles_needed:,2] = zs
+
+    old_density_interp = get_central_interpolator(f_old, "Density")
+    old_density = old_density_interp([0,0,0])
+
+    new_density = old_density * SN.ejecta_mass \
+        * injection_kernel.pdf(xs) \
+        * injection_kernel.pdf(ys) \
+        * injection_kernel.pdf(zs) 
+
+    f_new["PartType0"]["Density"][-num_new_particles_needed:] = new_density
 
     f_new["PartType0"]["ElectronAbundance"][-num_new_particles_needed:] = 1.0 # EDIT: unused?
 
@@ -419,17 +432,19 @@ def create_snapshot_with_new_SN(run_dir):
     if "MagneticField" in set(f_old["PartType0"]):
         with_MHD = True
 
-        # find `n_neighbors` particles closest to origin
-        n_neighbors = 100
-        coords = f_old["PartType0"]["Coordinates"].value - f_old["Header"].attrs["BoxSize"]/2
-        Bs = f_old["PartType0"]["MagneticField"].value
-        dist = (coords**2).sum(axis=1)
-        arg_part = np.argpartition(dist, n_neighbors)
-        interpolate_from = arg_part[:n_neighbors]
+        # # find `n_neighbors` particles closest to origin
+        # n_neighbors = 100
+        # coords = f_old["PartType0"]["Coordinates"].value - f_old["Header"].attrs["BoxSize"]/2
+        # Bs = f_old["PartType0"]["MagneticField"].value
+        # dist = (coords**2).sum(axis=1)
+        # arg_part = np.argpartition(dist, n_neighbors)
+        # interpolate_from = arg_part[:n_neighbors]
 
-        # now interpolate from those `n_neighbors` particles
-        interp = interpolate.LinearNDInterpolator(coords[interpolate_from],
-                                                  Bs[interpolate_from])
+        # # now interpolate from those `n_neighbors` particles
+        # interp = interpolate.LinearNDInterpolator(coords[interpolate_from],
+        #                                           Bs[interpolate_from])
+
+        interp = get_central_interpolator(f_old, "MagneticField")
 
         # For now, interpolate all the the origin
         # In the future, maybe interpolate to their real locations?
@@ -448,6 +463,49 @@ def create_snapshot_with_new_SN(run_dir):
     f_old.close()
     f_new.close()
     os.rename(snapshot_file_new_tmp, snapshot_file_new)
+
+def get_central_interpolator(hdf_file, field, k_nearest_neighbors=100):
+    """ Create a linear interpolator for interpolation `field` back to the origin
+
+    Inputs
+    ------
+        hdf_file : h5py.File object
+            - should conform to GIZMO snapshot file standards
+        field : string
+            - should be a field that is defined for `PartType0` of `hdf_file`
+              (e.g. "Density")
+
+    Returns
+    -------
+        interp : scipy.interpolate.LinearNDInterpolator object
+            - will be a 3D linear interpolator
+                - inputs: coordinates *relative to box center*
+                - outputs: interpolated field value (could be 1D or multi-D)
+
+
+    Notes
+    -----
+        - May have trouble if the origin is not contained within the envelop
+          of the k nearest neighbors (e.g. if the nearest neighbors are 
+          preferentially lopsided). In practice this hasn't been a big deal, 
+          since the problem is mostly symmetrical.
+           - If this does become a problem, you could try to increase 
+             `k_nearest_neighbors` or re-write this to ensure that you are 
+             choosing a subset of nearest neighbors *from all octants*.
+    
+    """
+
+    coords = hdf_file["PartType0"]["Coordinates"].value - hdf_file["Header"].attrs["BoxSize"]/2
+    field_values = hdf_file["PartType0"][field].value
+    dist = (coords**2).sum(axis=1)
+    arg_part = np.argpartition(dist, k_nearest_neighbors)
+    interpolate_from = arg_part[:k_nearest_neighbors]
+
+    # now interpolate from those `k_nearest_neighbors` particles
+    interp = interpolate.LinearNDInterpolator(coords[interpolate_from],
+                                              field_values[interpolate_from])
+
+    return interp
 
 
 def create_restart_type_file(inputs_dir, restart_type, basename="RESTART"):
