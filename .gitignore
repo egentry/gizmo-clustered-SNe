@@ -24,6 +24,12 @@ RESTART
 *test.e*
 *test.o*
 *test.byhand*
+*_HD.o*
+*_HD.e*
+*_MHD.o*
+*_MHD.e*
+*_adiabatic.o*
+*_adiabatic.e*
 *params.restart
 
 Make.config.machine
