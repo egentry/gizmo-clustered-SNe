@@ -13,7 +13,7 @@
 #
 #PBS -S /bin/bash
 #
-#PBS -N 200_HD
+#PBS -N 300_HD
 #
 
 cd $PBS_O_WORKDIR
