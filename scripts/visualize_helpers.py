@@ -34,12 +34,19 @@ def load_snapshots(outputs_dir):
     return ts
 
 
+def get_snapshot_time(snapshot_filename):
+    """excepts code units to be Myr for time variables"""
+    with h5py.File(snapshot_filename, mode="r") as f:
+        time = f["Header"].attrs["Time"]
+        
+    return time
+
+
 def get_snapshot_times(ts):
     """`ts` should be a yt timeseries"""
     snapshot_times = np.array([ds.current_time.convert_to_cgs() 
                                for ds in ts]) / Myr
     return snapshot_times
-
 
 
 def total_mass_of_snapshot(snapshot_filename, particle_type="PartType0"):

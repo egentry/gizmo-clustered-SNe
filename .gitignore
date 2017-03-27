@@ -42,6 +42,8 @@ compile_time_info.c
 grackle/local/include/*
 grackle/local/lib/*
 
+runs/*/outputs/*.tar.gz
+
 # Object files
 *.o
 *.ko
