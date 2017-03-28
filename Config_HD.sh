@@ -134,8 +134,8 @@ NOGRAVITY                      # turn off self-gravity (compatible with analytic
 # --------------------------------------- Output/Input options
 ####################################################################################################
 HAVE_HDF5						# needed when HDF5 I/O support is desired
-#OUTPUT_IN_DOUBLEPRECISION      # snapshot files will be written in double precision
-#INPUT_IN_DOUBLEPRECISION       # input files assumed to be in double precision (otherwise float is assumed)
+OUTPUT_IN_DOUBLEPRECISION      # snapshot files will be written in double precision
+INPUT_IN_DOUBLEPRECISION       # input files assumed to be in double precision (otherwise float is assumed)
 #OUTPUT_POSITIONS_IN_DOUBLE     # input/output files in single, but positions in double (used in hires, hi-dynamic range sims when positions differ by < float accuracy)
 #INPUT_POSITIONS_IN_DOUBLE      # as above, but specific to the ICs file
 #OUTPUTPOTENTIAL                # forces code to compute+output potentials in snapshots
