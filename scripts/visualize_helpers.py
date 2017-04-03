@@ -10,6 +10,10 @@ from units import M_solar, m_proton, pc, yr, Myr, gamma
 ##########################
 snapshot_filename_format = "snapshot_???.hdf5"
 
+def snapshot_filename_to_number(snapshot_filename):
+    snapshot_number = int(os.path.basename(snapshot_filename).replace(".hdf5","").replace("snapshot_",""))
+    return snapshot_number
+
 def get_snapshot_filenames(outputs_dir, 
                            snapshot_filename_format=snapshot_filename_format):
 

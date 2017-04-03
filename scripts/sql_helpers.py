@@ -20,6 +20,7 @@ from units import M_solar, m_proton, pc, yr, Myr, km, s, gamma
 
 from visualize_helpers import \
     get_snapshot_filenames, \
+    snapshot_filename_to_number, \
     get_snapshot_time, \
     total_mass_of_snapshot, \
     total_radial_momentum_of_snapshot, \
@@ -174,7 +175,7 @@ def open_as_DataFrame(run_name, tmp_location=True, copy_first=False):
     return df
 
 def add_snapshot_if_missing(snapshot_filename, run_name, verbose=False):
-    snapshot_number = int(os.path.basename(snapshot_filename).replace(".hdf5","").replace("snapshot_",""))
+    snapshot_number = snapshot_filename_to_number(snapshot_filename)
     if not is_snapshot_missing(run_name, snapshot_number):
         if verbose:
             print("Snapshot #{} already found for run: {}".format(snapshot_number, run_name) )
