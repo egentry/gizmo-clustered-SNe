@@ -3,6 +3,7 @@ import os
 import h5py
 import numpy as np
 import yt
+import seaborn as sns
 
 from units import M_solar, m_proton, pc, yr, Myr, gamma, km, s
 
@@ -192,7 +193,8 @@ def mpl_plot_saver(fig, plot_name, plots_dir="./",
 def plot_projected_density(ts, snapshot_number, snapshot_number_to_index_map, 
     SN_times, plots_dir, 
     save_plot=True,
-    show_plot=True):
+    show_plot=True,
+    seaborn_style="white"):
     """ Creates [and optionally saves] a plot of projected density
 
     Inputs
@@ -232,7 +234,8 @@ def plot_projected_density(ts, snapshot_number, snapshot_number_to_index_map,
                                        "alpha":0.9},
                    )
     if show_plot:
-        p.show()
+        with sns.axes_style(seaborn_style):
+            p.show()
     
 
     if save_plot:
@@ -256,7 +259,8 @@ field_type = {
 def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
     SN_times, plots_dir,
     save_plot=True,
-    show_plot=True):
+    show_plot=True,
+    seaborn_style="white"):
     """ Creates [and optionally saves] a plot of `field`, sliced at x=0
 
     Inputs
@@ -288,13 +292,14 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
     t = ds.current_time.convert_to_cgs().value / Myr
     N_SNe_so_far = np.sum(t > SN_times)
     s.annotate_text((.8,.94), 
-                    "N_SNe: {}".format(N_SNe_so_far),
+                    "$N_\mathrm{{SNe}}$: {}".format(N_SNe_so_far),
                     coord_system="axis",
                     inset_box_args={"facecolor":"darkslategray",
                                        "alpha":0.9},
                    )
     if show_plot:
-        s.show()
+        with sns.axes_style(seaborn_style):
+            s.show()
     
     if save_plot:
         subdir = "slice"
