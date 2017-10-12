@@ -194,6 +194,8 @@ def add_snapshot_if_missing(snapshot_filename, run_name, verbose=False):
 
 def add_simulation(run_name, verbose=True):
     try:
+        tmp_dir = get_db_dirname_tmp()
+        os.makedirs(tmp_dir, exist_ok=True)
         copy_database_from_permanent_to_tmp(run_name)
     except FileNotFoundError:
         if not os.path.exists(get_db_filename_tmp(run_name)):
