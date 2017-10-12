@@ -2,10 +2,12 @@ import glob
 import os
 import h5py
 import numpy as np
+import pandas as pd
 import yt
 import seaborn as sns
 
 from units import M_solar, m_proton, pc, yr, Myr, gamma, km, s
+import MHD
 
 from matplotlib import pyplot as plt
 
@@ -246,6 +248,8 @@ def plot_projected_density(ts, snapshot_number, snapshot_number_to_index_map,
 
         yt_plot_saver(p, plot_name, plots_dir)
 
+    return p
+
 
 field_type = {
     "density": "gas",
@@ -260,7 +264,8 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
     SN_times, plots_dir,
     save_plot=True,
     show_plot=True,
-    seaborn_style="white"):
+    seaborn_style="white",
+    add_magnetic_field_lines=False):
     """ Creates [and optionally saves] a plot of `field`, sliced at x=0
 
     Inputs
@@ -282,11 +287,21 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
     show_plot : Optional(bool)
         - True if you want to show plots 
          (you might want to disable this for non-interactive sessions)
+    add_magnetic_field_lines : Optional(bool)
+        - True if you want to try adding field lines to the plot
+          (field lines must already be computed and saved to disk
+           with filenames determined by `MHD.get_field_lines_filename_from_ds`)
 
     """
     i = snapshot_number_to_index_map[snapshot_number]
     ds = ts[i]
     s = yt.SlicePlot(ds, "x", (field_type[field], field))
+    
+    if field == "density":
+        s.set_unit(field, "amu/cm**3")
+        s.set_zlim(field, 10**1, 10**-3 )
+        s.set_colorbar_label(field, "Density $ [ m_\mathrm{H} \; \mathrm{cm}^{-3} ] $")
+    
     s.set_cmap(field=field, cmap="viridis")
     s.annotate_timestamp(corner="upper_left", draw_inset_box=True)
     t = ds.current_time.convert_to_cgs().value / Myr
@@ -300,13 +315,42 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
     if show_plot:
         with sns.axes_style(seaborn_style):
             s.show()
-    
+
     if save_plot:
         subdir = "slice"
         if not os.path.exists(os.path.join(plots_dir, subdir)):
             os.mkdir(os.path.join(plots_dir, subdir))
         plot_name = os.path.join(subdir,"{}_snapshot_{:0>3}".format(field, snapshot_number))
+
         yt_plot_saver(s, plot_name, plots_dir)
+
+    if add_magnetic_field_lines:
+        filename = MHD.get_field_lines_filename_from_ds(ds, plots_dir)
+        if os.path.exists(filename):
+
+            df_lines = pd.read_csv(filename)
+            p = s.plots[(field_type[field], field)]
+
+            xlim = p.axes.get_xlim()
+            unit_scaling = s.width[0].value / [xlim[1] - xlim[0]]
+
+            MHD.plot_field_lines(df_lines, p.axes,
+                                 unit_scaling=unit_scaling,
+                                 replace_nans=False)
+
+            if show_plot:
+                with sns.axes_style(seaborn_style):
+                    s.show()
+            if save_plot:
+                subdir = "slice"
+                if not os.path.exists(os.path.join(plots_dir, subdir)):
+                    os.mkdir(os.path.join(plots_dir, subdir))
+                plot_name = os.path.join(subdir,"{}_snapshot_{:0>3}_with_field_lines".format(field, snapshot_number))
+                yt_plot_saver(s, plot_name, plots_dir)
+
+    return s
+
+
 
 
 def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
@@ -467,7 +511,8 @@ def format_time_str(current_time):
 def plot_profile(ts, snapshot_number, snapshot_number_to_index_map, field,
     rho_0, plots_dir,
     save_plot=True,
-    show_plot=True):
+    show_plot=True,
+    MHD=False):
     """ Creates [and optionally saves] a radial profile plot of `field`
 
     Inputs
