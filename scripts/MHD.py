@@ -70,9 +70,9 @@ def plot_field_lines(df_lines, ax,
     for line_id in df_lines.line_id.drop_duplicates():
         df_tmp = df_lines.set_index("line_id").loc[line_id].copy()
 
-        y_0 = df_tmp.iloc[0].y
+        y_final = df_tmp.dropna().sort_values("z").iloc[-1].y
         if replace_nans:
-            df_tmp[df_tmp.isnull()] = y_0
+            df_tmp.loc[df_tmp.y.isnull(), "y"] = y_final
 
         ax.plot(df_tmp.y/unit_scaling, df_tmp.z/unit_scaling,
                 **plot_kwargs)
