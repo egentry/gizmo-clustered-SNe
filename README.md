@@ -1,27 +1,26 @@
-Welcome!
+# gizmo-clustered-SNe
+3D simulations of clustered SNe with cooling, and with/without MHD
+-------
 
-This is GIZMO (beta version: likely to be Google-style and stay in beta for quite some time).
+Author: Eric Gentry   (gentry.e@gmail.com; egentry@ucsc.edu)   
 
-The simulation code GIZMO is a flexible, multi-method mhd+gravity code. The code includes a hydro solver using the Lagrangian meshless finite-mass method, a meshless finite volume method, the modern "pressure-sph" method, and "traditional" SPH. Self-gravity is solved fast, with a BH-Tree (optionally a hybrid PM-Tree for periodic boundaries), with adaptive gravitational softenings. Hydrodynamics and gravity are both optional. 
+Licensed under the GNU General Public License (v3)
 
-The code is descended from P-SPH/P-GADGET, itself descended from GADGET-3 (so a huge debt owes to the work of Volker Springel), and many of the naming conventions and routines remain (for the sake of compatibility with the large library of GADGET work and analysis software). You should see the source code for appropriate attribution of the code elements. Currently available modules include things like: hydrodynamics, MHD, cosmological integrations, galaxy/star/black hole formation with feedback from stars and black holes (both explicit, detailed models and sub-grid models), self-interacting dark matter, adaptive gravitational softening lengths for all particle types, anisotropic conduction and viscosity, sub-grid turbulent diffusion, the ability to insert arbitrary external gravitational fields, integration in non-standard cosmologies, sink particles, "dust fluids" (particulate-gas interactions), cosmic rays (with advection, diffusion, streaming, heating/cooling, and injection by SNe), nuclear+degenerate equations of state (being used in some code branches), and radiation hydrodynamics (in progress, partially implemented). Most of these are not in the public release of the code, but in the private (code development) branch; see the users guide for details.
+-------
 
-No, the code title is not an acronym, I just liked it. It refers both to the code's multi-purpose applications and to its historical relationship to GADGET.
+This work is an extension of my previous project, where I simulated some of the same star clusters, but with a 1D code that enforced spherical symmetry ([github.com/egentry/clustered_SNe](github.com/egentry/clustered_SNe)). For more details, you can check out the paper ([Gentry et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.465.2471G)). 
 
-The BitBucket site is where I will post code updates, news, and documentation, so check back regularly. If you have code issues, feature requests, bugs, or just questions, use the (public) BitBucket issue tracker and wiki pages. 
+The general idea is to re-run some of those simulations for the same star clusters, but now in 3D, and maybe with magnetic fields.
 
-The main reference for the numerical methods, setting up the code, code policies, branching etc, is the user's guide, available through download on the bitbucket site or at my website: 
+-------
 
-http://www.tapir.caltech.edu/~phopkins/Site/GIZMO_files/gizmo_documentation.html
+In general, the version of GIZMO that I'm using is only very slightly modified from the public version of GIZMO.  Most of the feedback injection that I'm doing actually happens outside of the C code---I stop the simulation at the time of each SN, create a new HDF5 snapshot file using python, then restart the C code.  This means the C code should be _fairly_ clean, although not perfectly so.  Get in touch with me over email if you have any questions.
 
-Read it!
+Beyond that, the only non-standard part of the C code is the inclusion of Grackle (v2) to calculate metallicity-dependent cooling.  It its current form (circa 6 Nov 2017) it assumes a custom version of Grackle (although I'm not actually using any of the customizations), which has been included within this repo.  Maybe in the future I'll tear out those customizations, and upgrade to the Grackle v3 interface.  But, if you're reading this, then I guess I haven't gotten around to it yet.
 
-The code is written in standard ANSI C, and should run on all parallel platforms that support MPI. The portability of the code has been confirmed on a large number of systems -- if it can run GADGET (and it almost certainly can), it can run GIZMO.
+For more details about the project see:
+ - Phil Hopkin's [GIZMO page](http://www.tapir.caltech.edu/~phopkins/Site/GIZMO.html)
+ - the README for the public version of GIZMO (saved as `README-Hopkins.md` in this repo)
+ - the [Grackle documentation](grackle.readthedocs.io)
 
-The public version of the code is free software, distributed under the GNU General Public License (http://www.gnu.org/copyleft/gpl.html). This implies that you may freely distribute and copy the software. You may also modify it as you wish, and distribute these modified versions as long as you indicate prominently any changes you made in the original code, and as long as you leave the copyright notices, and the no-warranty notice intact. Please read the General Public License for more details. Note that the authors retain their copyright on the code. The public code is available at:
-
-http://www.tapir.caltech.edu/~phopkins/public/gizmo_public.tgz
-
-The private version of the code is closed and can only be used or distributed with explicit permission from the code authors. Please note that most of the non-public "modules" are proprietary and developed by active students/postdocs for their ongoing research - it is not acceptable to use or share these routines without first obtaining the explicit permission of both the lead code author and the author(s) of the relevant routines.
-
-If you use any version of the code, please reference the code paper at: http://arxiv.org/abs/1409.7395 (Hopkins 2015); you should also reference Volker Springel's GADGET paper (Springel, 2005, MNRAS, 364, 1105) for the domain decomposition and N-body algorithms.
+I've also added a bunch of python scripts/jupyter notebooks to help generate initial conditions, add SN feedback particles, and visualize the results.  If you're curious, you can check them out in the `scripts` directory.
