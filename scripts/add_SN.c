@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     {
 
         int status = 0;
-        char command[256] = "python prepare_for_restart.py ";
+        char command[256] = "python3 prepare_for_restart.py ";
         strcat(command, argv[1]);
         strcat(command, " ");
         strcat(command, argv[2]);
