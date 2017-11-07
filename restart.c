@@ -43,6 +43,7 @@ int old_MaxPart = 0, new_MaxPart;
 
 void restart(int modus)
 {
+    return;
     char buf[200], buf_bak[200], buf_mv[500];
     double save_PartAllocFactor;
     int nprocgroup, masterTask, groupTask;
