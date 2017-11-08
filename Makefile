@@ -625,6 +625,27 @@ tmp := $(shell echo "MACH_INSTALL_PREFIX = $(PWD)/grackle/local" >> grackle/src/
 endif
 
 
+#----------------------------
+ifeq ($(SYSTYPE),"raijin")
+CC       =  mpicc
+CXX      =  mpicxx
+OPTIMIZE =  -g -Wall
+GSL_INCL = 
+GSL_LIBS = 
+FFTW_INCL= 
+FFTW_LIBS= 
+HDF5INCL = -DH5_USE_16_API
+HDF5LIB  = 
+MPICHLIB = 
+
+tmp := $(shell cd grackle && csh ./configure)
+
+tmp := $(shell echo "CONFIG_MACHINE = linux-gnu " > grackle/src/clib/Make.config.machine)
+tmp := $(shell git checkout grackle/src/clib/Make.mach.linux-gnu)
+tmp := $(shell echo "MACH_INSTALL_PREFIX = $(PWD)/grackle/local" >> grackle/src/clib/Make.mach.linux-gnu)
+
+endif
+
 #----------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------

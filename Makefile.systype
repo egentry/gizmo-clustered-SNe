@@ -41,4 +41,5 @@
 #SYSTYPE="Centos5-Gnu"
 #SYSTYPE="OPA-Cluster64-Intel"
 #SYSTYPE="denali"
-SYSTYPE="hyades"
+#SYSTYPE="hyades"
+SYSTYPE="raijin"

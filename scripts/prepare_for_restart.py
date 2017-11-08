@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 import os, sys, glob, h5py
 import numpy as np
 
@@ -9,10 +11,8 @@ from injection_helpers import create_snapshot_with_new_SN, \
     create_restart_params, \
     get_ith_snapshot_file_in_dir, \
     get_SNe, \
-    create_restart_type_file, \
     Params, \
-    snapshot_to_energy_file, \
-    RestartType
+    snapshot_to_energy_file
 
 
 from units import M_solar, m_proton, pc, yr, Myr, km, s, gamma
@@ -21,9 +21,6 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("end_file", help="location of 'end' sentinel file, relative to scripts dir")
 parser.add_argument("run_dir", help="dir containing 'inputs' and 'outputs', relative to scripts dir")
-parser.add_argument("--from-checkpoint", 
-    help="Force a restart from checkpoint files, even if we could have tried using restartfiles",
-    action="store_true")
 args = parser.parse_args()
 
 
@@ -32,7 +29,6 @@ if __name__ == "__main__":
     # - if last_time = TimeMax, inject SN, create restart params
     # - if last time > TimeMax, throw error
     # - if last time > TimeMax, do nothing
-    #   - create bash file with RESTART_FLAG
 
     inputs_dir  = os.path.join(args.run_dir, "inputs")
     outputs_dir = os.path.join(args.run_dir, "outputs")
@@ -76,29 +72,21 @@ if __name__ == "__main__":
     elif t_current + t_tol < t_max:
         # probably stopped during normal operation
         print("Restarting without changing params or adding snapshots")
+        print("(will only update the start time of the params file)")
 
         if t_current + t_tol < t_min:
             raise RuntimeError("Can't restart as is, if t_current<t_min (t_min={:.3}, t_current={:.3}".format(t_min, t_current))
 
-        if np.isclose(t_current, t_min, rtol=0, atol=t_tol):
-            restart_type = RestartType.SNAPSHOTS
-        else:
-            restart_type = RestartType.RESTARTFILE
+        current_params.InitCondFile = os.path.join(
+            os.path.dirname(current_params.InitCondFile),
+            os.path.splitext(os.path.basename(last_snapshot_filename))[0]
+            )
+        current_params.TimeBegin = t_current
+        current_params.TimeOfFirstSnapshot = current_params.TimeBegin + current_params.TimeBetSnapshot
+        with open(restart_params_filename, mode="w") as params_file:
+            current_params.to_file(params_file)
 
-        if args.from_checkpoint:
-            restart_type = RestartType.SNAPSHOTS
-
-            current_params.InitCondFile = os.path.join(
-                os.path.dirname(current_params.InitCondFile),
-                os.path.splitext(os.path.basename(last_snapshot_filename))[0]
-                )
-            current_params.TimeBegin = t_current
-            current_params.TimeOfFirstSnapshot = current_params.TimeBegin + current_params.TimeBetSnapshot
-            with open(restart_params_filename, mode="w") as params_file:
-                current_params.to_file(params_file)
-
-
-        create_restart_type_file(inputs_dir, restart_type)
+        print("end file: ", args.end_file)
         os.remove(args.end_file)
 
 
@@ -113,7 +101,6 @@ if __name__ == "__main__":
 
         create_restart_params(inputs_dir, outputs_dir, SNe)
 
-        create_restart_type_file(inputs_dir, RestartType.SNAPSHOTS)
         os.remove(args.end_file)
 
 
@@ -132,7 +119,6 @@ if __name__ == "__main__":
         snapshot_to_energy_file(new_snapshot_filename, energy_filename)
         create_restart_params(inputs_dir, outputs_dir, SNe)
 
-        create_restart_type_file(inputs_dir, RestartType.SNAPSHOTS)
         os.remove(args.end_file)
 
 

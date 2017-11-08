@@ -11,9 +11,9 @@ from collections import OrderedDict
 from units import M_solar, m_proton, pc, yr, Myr, km, s, gamma
 from astropy import units as u
 
-from visualize_helpers import total_mass_of_snapshot, \
-                              total_internal_energy_of_snapshot, \
-                              total_kinetic_energy_of_snapshot
+from snapshot_helpers import total_mass_of_snapshot, \
+                             total_internal_energy_of_snapshot, \
+                             total_kinetic_energy_of_snapshot
 
 default_SNe_datafile = "1D_data/25451948-485f-46fe-b87b-f4329d03b203_SNe.dat"
 
@@ -388,7 +388,7 @@ def create_snapshot_with_new_SN(run_dir):
 
     f_new["PartType0"]["Masses"][-num_new_particles_needed:] = mass_per_new_particle
 
-    f_new["PartType0"]["Metallicity"][-num_new_particles_needed:] = SN.ejecta_mass / SN.ejecta_mass_Z
+    f_new["PartType0"]["Metallicity"][-num_new_particles_needed:] = SN.ejecta_mass_Z / SN.ejecta_mass
 
     f_new["PartType0"]["NeutralHydrogenAbundance"][-num_new_particles_needed:] = 0.0  # EDIT: unused?
 

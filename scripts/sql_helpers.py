@@ -21,7 +21,9 @@ from units import M_solar, m_proton, pc, yr, Myr, km, s, gamma
 from visualize_helpers import \
     get_snapshot_filenames, \
     snapshot_filename_to_number, \
-    get_snapshot_time, \
+    get_snapshot_time
+
+from snapshot_helpers import \
     total_mass_of_snapshot, \
     total_radial_momentum_of_snapshot, \
     total_kinetic_energy_of_snapshot, \
