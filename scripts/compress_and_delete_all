@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+#PBS -l ncpus=1
+#PBS -l walltime=4:00:00
+#PBS -l mem=2GB
+#
+#PBS -q normal
+#PBS -P jh2
+#
+#PBS -S /bin/bash
+#
+#PBS -N compress_and_delete_all
+#
+cd $PBS_O_WORKDIR
+
+source $HOME/.bashrc
+
+echo $PBS_O_WORKDIR
+
+for snapshot in snapshot_*.hdf5; do
+	if [ -f ${snapshot} ]; then
+		tar -czvf ${snapshot}.tar.gz $snapshot && rm $snapshot
+	fi
+done
