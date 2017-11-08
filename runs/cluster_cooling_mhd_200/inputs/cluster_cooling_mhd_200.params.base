@@ -9,7 +9,6 @@
 %        OUTPUT_IN_DOUBLEPRECISION  
 %        INPUT_IN_DOUBLEPRECISION  
 %
-%        GENTRY_FB
 %        GRACKLE_OPTS
 %        COOLING
 %        GRACKLE
@@ -73,7 +72,7 @@ MinGasTemp                         10
 InitMetallicity                    1
 MetalCoolingOn                     1
 UVBackgroundOn                     1
-GrackleDataFile                    grackle/input/CloudyData_UVB=HM2012.h5
+GrackleDataFile                    $HOME/local/grackle/input/CloudyData_UVB=HM2012.h5
 SNeDataFile                        ./runs/cluster_cooling_mhd_200/inputs/11_SNe.dat
 
 % % % Overwrite these every time a SN is added

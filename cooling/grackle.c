@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <wordexp.h>
 #include "../allvars.h"
 #include "../proto.h"
 #include "./cooling.h"
@@ -22,142 +23,172 @@
 double CallGrackle(double u_old, double rho, double dt, double *ne_guess, int target, int mode)
 {
     gr_float returnval = 0.0;
-    gr_float edot = 0.0;
-#if defined(GRACKLE_FULLYIMPLICIT) && !defined(FLAG_NOT_IN_PUBLIC_CODE)
-    edot = SphP[target].DtInternalEnergy / (All.HubbleParam * All.UnitEnergy_in_cgs /
-		(All.UnitMass_in_g * All.UnitTime_in_s) * (PROTONMASS/HYDROGEN_MASSFRAC)) * rho;
-#endif
+
+//     gr_float edot = 0.0;
+// #if defined(GRACKLE_FULLYIMPLICIT) && !defined(FLAG_NOT_IN_PUBLIC_CODE)
+//     edot = SphP[target].DtInternalEnergy / (All.HubbleParam * All.UnitEnergy_in_cgs /
+// 		(All.UnitMass_in_g * All.UnitTime_in_s) * (PROTONMASS/HYDROGEN_MASSFRAC)) * rho;
+// #endif
+
+    gr_float cooling_time, temperature, pressure, gamma;
+
+    All.GrackleUnits.a_value = All.cf_atime;
+
+    grackle_field_data my_fields;
     
     // Set grid dimension and size.
     // grid_start and grid_end are used to ignore ghost zones.
-    int field_size = 1;
-    int grid_rank = 3;
-    int grid_dimension[3], grid_start[3], grid_end[3];
+    const int field_size = 1;
+    my_fields.grid_rank = 3;
+    my_fields.grid_dimension = malloc(field_size * sizeof(int));
+    my_fields.grid_start     = malloc(field_size * sizeof(int));
+    my_fields.grid_end       = malloc(field_size * sizeof(int));
+
     int i;
     for (i = 0;i < 3;i++) {
-        grid_dimension[i] = 1; // the active dimension not including ghost zones.
-        grid_start[i]     = 0;
-        grid_end[i]       = 0;
+      my_fields.grid_dimension[i] = 1; // the active dimension not including ghost zones.
+      my_fields.grid_start[i] = 0;
+      my_fields.grid_end[i] = 0;
     }
-    grid_dimension[0] = field_size;
-    grid_end[0]       = field_size - 1;
-    
-    gr_float density, metal_density, energy, velx, vely, velz;
-    gr_float cooling_time, temperature, pressure, gamma;
-    velx          = SphP[target].VelPred[0];
-    vely          = SphP[target].VelPred[1];
-    velz          = SphP[target].VelPred[2];
-    density       = rho;
-    energy        = u_old;
+
+    my_fields.grid_dimension[0] = field_size;
+    my_fields.grid_end[0] = field_size - 1;
+
+    my_fields.density         = malloc(field_size * sizeof(gr_float));
+    my_fields.internal_energy = malloc(field_size * sizeof(gr_float));
+    my_fields.x_velocity      = malloc(field_size * sizeof(gr_float));
+    my_fields.y_velocity      = malloc(field_size * sizeof(gr_float));
+    my_fields.z_velocity      = malloc(field_size * sizeof(gr_float));
+
+    my_fields.x_velocity[0]      = SphP[target].VelPred[0];
+    my_fields.y_velocity[0]      = SphP[target].VelPred[1];
+    my_fields.z_velocity[0]      = SphP[target].VelPred[2];
+    my_fields.density[0]         = rho;
+    my_fields.internal_energy[0] = u_old;
+
+    // for metal_cooling = 1
+    my_fields.metal_density    = malloc(field_size * sizeof(gr_float));
 #ifdef GRACKLE_OPTS
-    metal_density = density * P[target].Metallicity[0];
+    my_fields.metal_density[0] = rho * P[target].Metallicity[0];
 #else
-    metal_density = density * 0.02;
+    my_fields.metal_density[0] = rho * 0.02;
 #endif
     gamma         = GAMMA;
-    
-    gr_float ne_density;
-    gr_float HI_density, HII_density, HM_density;
-    gr_float HeI_density, HeII_density, HeIII_density;
-    gr_float H2I_density, H2II_density;
-    gr_float DI_density, DII_density, HDI_density;
-    gr_float tiny = 1.0e-20;
-    
-    ne_density    = density * tiny;
-    
-    HI_density    = density * tiny;
-    HII_density   = density * tiny;
-    HM_density    = density * tiny;
-    
-    HeI_density   = density * tiny;
-    HeII_density  = density * tiny;
-    HeIII_density = density * tiny;
 
-    H2I_density   = density * tiny;
-    H2II_density  = density * tiny;
-    DI_density    = density * tiny;
-    DII_density   = density * tiny;
-    HDI_density   = density * tiny;
+    // for primordial_chemistry >= 1
+    my_fields.HI_density      = malloc(field_size * sizeof(gr_float));
+    my_fields.HII_density     = malloc(field_size * sizeof(gr_float));
+    my_fields.HeI_density     = malloc(field_size * sizeof(gr_float));
+    my_fields.HeII_density    = malloc(field_size * sizeof(gr_float));
+    my_fields.HeIII_density   = malloc(field_size * sizeof(gr_float));
+    my_fields.e_density       = malloc(field_size * sizeof(gr_float));
+    // for primordial_chemistry >= 2
+    my_fields.HM_density      = malloc(field_size * sizeof(gr_float));
+    my_fields.H2I_density     = malloc(field_size * sizeof(gr_float));
+    my_fields.H2II_density    = malloc(field_size * sizeof(gr_float));
+    // for primordial_chemistry >= 3
+    my_fields.DI_density      = malloc(field_size * sizeof(gr_float));
+    my_fields.DII_density     = malloc(field_size * sizeof(gr_float));
+    my_fields.HDI_density     = malloc(field_size * sizeof(gr_float));
+    
+    const double tiny_number = 1.0e-20;
+
+    // bunch of default values, to be overwritten as needed
+    my_fields.HI_density[0]    = grackle_data->HydrogenFractionByMass * my_fields.density[0];
+    my_fields.HII_density[0]   = tiny_number  * my_fields.density[0];
+    my_fields.HM_density[0]    = tiny_number  * my_fields.density[0];
+    my_fields.HeI_density[0]   = (1.0 - grackle_data->HydrogenFractionByMass) * my_fields.density[0];
+    my_fields.HeII_density[0]  = tiny_number  * my_fields.density[0];
+    my_fields.HeIII_density[0] = tiny_number  * my_fields.density[0];
+    my_fields.H2I_density[0]   = tiny_number  * my_fields.density[0];
+    my_fields.H2II_density[0]  = tiny_number  * my_fields.density[0];
+    my_fields.DI_density[0]    = 2.0 * 3.4e-5 * my_fields.density[0];
+    my_fields.DII_density[0]   = tiny_number  * my_fields.density[0];
+    my_fields.HDI_density[0]   = tiny_number  * my_fields.density[0];
+    my_fields.e_density[0]     = tiny_number  * my_fields.density[0];
     
 #if (GRACKLE_CHEMISTRY >  0) // non-tabular
     // Atomic
-    ne_density    = density * *ne_guess;
+    my_fields.e_density[0]    = rho * *ne_guess;
     
-    HI_density    = density * SphP[target].grHI;  //initialized with HYDROGEN_MASSFRAC
-    HII_density   = density * SphP[target].grHII;
-    HM_density    = density * SphP[target].grHM;
+    my_fields.HI_density[0]    = rho * SphP[target].grHI;  //initialized with HYDROGEN_MASSFRAC
+    my_fields.HII_density[0]   = rho * SphP[target].grHII;
+    my_fields.HM_density[0]    = rho * SphP[target].grHM;
     
-    HeI_density   = density * SphP[target].grHeI;
-    HeII_density  = density * SphP[target].grHeII;
-    HeIII_density = density * SphP[target].grHeIII;
+    my_fields.HeI_density[0]   = rho * SphP[target].grHeI;
+    my_fields.HeII_density[0]  = rho * SphP[target].grHeII;
+    my_fields.HeIII_density[0] = rho * SphP[target].grHeIII;
 #endif
     
 #if (GRACKLE_CHEMISTRY >= 2) // Atomic+(H2+H2I+H2II)
-    H2I_density  = density * SphP[target].grH2I;
-    H2II_density = density * SphP[target].grH2II;
+    my_fields.H2I_density[0]  = rho * SphP[target].grH2I;
+    my_fields.H2II_density[0] = rho * SphP[target].grH2II;
     gamma = SphP[target].Gamma;
 #endif
     
 #if (GRACKLE_CHEMISTRY >= 3) // Atomic+(H2+H2I+H2II)+(DI+DII+HD)
-    DI_density   = density * SphP[target].grDI;
-    DII_density  = density * SphP[target].grDII;
-    HDI_density  = density * SphP[target].grHDI;
+    my_fields.DI_density[0]   = rho * SphP[target].grDI;
+    my_fields.DII_density[0]  = rho * SphP[target].grDII;
+    my_fields.HDI_density[0]  = rho * SphP[target].grHDI;
 #endif
+
+    // volumetric heating rate (provide in units like [erg s^-1 cm^-3])
+    my_fields.volumetric_heating_rate    = malloc(field_size * sizeof(gr_float));
+    my_fields.volumetric_heating_rate[0] = 0.0;
+
+    // specific heating rate (provide in units like [egs s^-1 g^-1]
+    my_fields.specific_heating_rate      = malloc(field_size * sizeof(gr_float));
+    my_fields.specific_heating_rate[0]   = 0.0;
+
+    // radiative transfer ionization / dissociation rate fields (provide in units like*[1/s])
+    my_fields.RT_HI_ionization_rate   = malloc(field_size * sizeof(gr_float));
+    my_fields.RT_HeI_ionization_rate  = malloc(field_size * sizeof(gr_float));
+    my_fields.RT_HeII_ionization_rate = malloc(field_size * sizeof(gr_float));
+    my_fields.RT_H2_dissociation_rate = malloc(field_size * sizeof(gr_float));
+    // radiative transfer heating rate field (provide in units like [erg s^-1 cm^-3])
+    my_fields.RT_heating_rate         = malloc(field_size * sizeof(gr_float));
+
+    my_fields.RT_HI_ionization_rate[0]   = 0.0;
+    my_fields.RT_HeI_ionization_rate[0]  = 0.0;
+    my_fields.RT_HeII_ionization_rate[0] = 0.0;
+    my_fields.RT_H2_dissociation_rate[0] = 0.0;
+    my_fields.RT_heating_rate[0]         = 0.0;
     
     switch(mode) {
         case 0:  //solve chemistry & update values
-            if(solve_chemistry(&All.GrackleUnits,
-                               All.cf_atime, dt,
-                               grid_rank, grid_dimension,
-                               grid_start, grid_end,
-                               &density, &energy,
-                               &velx, &vely, &velz,
-                               &HI_density, &HII_density, &HM_density,
-                               &HeI_density, &HeII_density, &HeIII_density,
-                               &H2I_density, &H2II_density,
-                               &DI_density, &DII_density, &HDI_density,
-                               &ne_density, &metal_density,edot) == 0) {
+            if(solve_chemistry(&All.GrackleUnits, &my_fields, dt) == 0) {
                 fprintf(stderr, "Error in solve_chemistry.\n");
                 endrun(ENDRUNVAL);
             }
             
 #if (GRACKLE_CHEMISTRY >  0) // non-tabular
             // Assign variables back
-            *ne_guess            = ne_density    / density;
+            *ne_guess            = my_fields.e_density[0]     / my_fields.density[0];
             
-            SphP[target].grHI    = HI_density    / density;
-            SphP[target].grHII   = HII_density   / density;
-            SphP[target].grHM    = HM_density    / density;
+            SphP[target].grHI    = my_fields.HI_density[0]    / my_fields.density[0];
+            SphP[target].grHII   = my_fields.HII_density[0]   / my_fields.density[0];
+            SphP[target].grHM    = my_fields.HM_density[0]    / my_fields.density[0];
             
-            SphP[target].grHeI   = HeI_density   / density;
-            SphP[target].grHeII  = HeII_density  / density;
-            SphP[target].grHeIII = HeIII_density / density;
+            SphP[target].grHeI   = my_fields.HeI_density[0]   / my_fields.density[0];
+            SphP[target].grHeII  = my_fields.HeII_density[0]  / my_fields.density[0];
+            SphP[target].grHeIII = my_fields.HeIII_density[0] / my_fields.density[0];
 #endif
             
 #if (GRACKLE_CHEMISTRY >= 2) // Atomic+(H2+H2I+H2II)
-            SphP[target].grH2I   = H2I_density   / density;
-            SphP[target].grH2II  = H2II_density  / density;
+            SphP[target].grH2I   = my_fields.H2I_density[0]   / my_fields.density[0];
+            SphP[target].grH2II  = my_fields.H2II_density[0]  / my_fields.density[0];
 #endif
             
 #if (GRACKLE_CHEMISTRY >= 3) // Atomic+(H2+H2I+H2II)+(DI+DII+HD)
-            SphP[target].grDI    = DI_density    / density;
-            SphP[target].grDII   = DII_density   / density;
-            SphP[target].grHDI   = HDI_density   / density;
+            SphP[target].grDI    = my_fields.DI_density[0]    / my_fields.density[0];
+            SphP[target].grDII   = my_fields.DII_density[0]   / my_fields.density[0];
+            SphP[target].grHDI   = my_fields.HDI_density[0]   / my_fields.density[0];
 #endif
-            returnval = energy;
+            returnval = my_fields.internal_energy[0];
             break;
             
         case 1:  //cooling time
-            if(calculate_cooling_time(&All.GrackleUnits, All.cf_atime,
-                                      grid_rank, grid_dimension,
-                                      grid_start, grid_end,
-                                      &density, &energy,
-                                      &velx, &vely, &velz,
-                                      &HI_density, &HII_density, &HM_density,
-                                      &HeI_density, &HeII_density, &HeIII_density,
-                                      &H2I_density, &H2II_density,
-                                      &DI_density, &DII_density, &HDI_density,
-                                      &ne_density, &metal_density, edot,
+            if(calculate_cooling_time(&All.GrackleUnits, &my_fields,
                                       &cooling_time) == 0) {
                 fprintf(stderr, "Error in calculate_cooling_time.\n");
                 endrun(ENDRUNVAL);
@@ -165,15 +196,7 @@ double CallGrackle(double u_old, double rho, double dt, double *ne_guess, int ta
             returnval = cooling_time;
             break;
         case 2:  //calculate temperature
-            if(calculate_temperature(&All.GrackleUnits, All.cf_atime,
-                                     grid_rank, grid_dimension,
-                                     grid_start, grid_end,
-                                     &density, &energy,
-                                     &HI_density, &HII_density, &HM_density,
-                                     &HeI_density, &HeII_density, &HeIII_density,
-                                     &H2I_density, &H2II_density,
-                                     &DI_density, &DII_density, &HDI_density,
-                                     &ne_density, &metal_density,
+            if(calculate_temperature(&All.GrackleUnits, &my_fields,
                                      &temperature) == 0) {
                 fprintf(stderr, "Error in calculate_temperature.\n");
                 endrun(ENDRUNVAL);
@@ -181,15 +204,7 @@ double CallGrackle(double u_old, double rho, double dt, double *ne_guess, int ta
             returnval = temperature;
             break;
         case 3:  //calculate pressure
-            if(calculate_pressure(&All.GrackleUnits, All.cf_atime,
-                                  grid_rank, grid_dimension,
-                                  grid_start, grid_end,
-                                  &density, &energy,
-                                  &HI_density, &HII_density, &HM_density,
-                                  &HeI_density, &HeII_density, &HeIII_density,
-                                  &H2I_density, &H2II_density,
-                                  &DI_density, &DII_density, &HDI_density,
-                                  &ne_density, &metal_density,
+            if(calculate_pressure(&All.GrackleUnits, &my_fields,
                                   &pressure) == 0) {
                 fprintf(stderr, "Error in calculate_temperature.\n");
                 endrun(ENDRUNVAL);
@@ -197,15 +212,7 @@ double CallGrackle(double u_old, double rho, double dt, double *ne_guess, int ta
             returnval = pressure;
             break;
         case 4:  //calculate gamma
-            if(calculate_gamma(&All.GrackleUnits, All.cf_atime,
-                               grid_rank, grid_dimension,
-                               grid_start, grid_end,
-                               &density, &energy,
-                               &HI_density, &HII_density, &HM_density,
-                               &HeI_density, &HeII_density, &HeIII_density,
-                               &H2I_density, &H2II_density,
-                               &DI_density, &DII_density, &HDI_density,
-                               &ne_density, &metal_density,
+            if(calculate_gamma(&All.GrackleUnits, &my_fields,
                                &gamma) == 0) {
                 fprintf(stderr, "Error in calculate_gamma.\n");
                 endrun(ENDRUNVAL);
@@ -226,6 +233,11 @@ void InitGrackle(void)
     grackle_verbose = 0;
     // Enable output
     if(ThisTask == 0) grackle_verbose = 1;
+
+    // Set initial expansion factor (for internal units).
+    // Set expansion factor to 1 for non-cosmological simulation.
+    double a_value = 1.0;
+    if(All.ComovingIntegrationOn) a_value = All.TimeBegin;
     
     // First, set up the units system.
     // These are conversions from code units to cgs.
@@ -236,9 +248,12 @@ void InitGrackle(void)
     All.GrackleUnits.time_units           = All.UnitTime_in_s / All.HubbleParam;
     All.GrackleUnits.velocity_units       = All.UnitVelocity_in_cm_per_s;
     All.GrackleUnits.a_units              = 1.0; // units for the expansion factor
+    All.GrackleUnits.a_value              = a_value;
     
     // Second, create a chemistry object for parameters and rate data.
-    if (set_default_chemistry_parameters() == 0) {
+    chemistry_data *my_grackle_data;
+    my_grackle_data = malloc(sizeof(chemistry_data));
+    if (set_default_chemistry_parameters(my_grackle_data) == 0) {
         fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
         exit(ENDRUNVAL);
     }
@@ -253,68 +268,71 @@ void InitGrackle(void)
     //    3: Flower & Harris (2007),
     //    4: Glover (2008).
     //    These are discussed in Turk et. al. (2011). Default: 0.
-    grackle_data.three_body_rate        = 0;
+    my_grackle_data->three_body_rate        = 0;
     
 #ifdef GRACKLE_OPTS
-    grackle_data.metal_cooling          = All.MetalCooling;    // metal cooling on
+    my_grackle_data->metal_cooling          = All.MetalCooling;    // metal cooling on
 #else
-    grackle_data.metal_cooling          = 0;                   // metal cooling on
+    my_grackle_data->metal_cooling          = 0;                   // metal cooling on
 #endif
-    grackle_data.h2_on_dust             = 0;                   // dust cooling/chemistry off
-    grackle_data.photoelectric_heating            = 0;
-    grackle_data.photoelectric_heating_rate       = 8.5e-26;
+    my_grackle_data->h2_on_dust             = 0;                   // dust cooling/chemistry off
+    my_grackle_data->photoelectric_heating            = 0;
+    my_grackle_data->photoelectric_heating_rate       = 8.5e-26; 
     
     // Flag to enable an effective CMB temperature floor. This is implemented by subtracting the value of the cooling rate at TCMB from the total cooling rate. Default: 1.
-    grackle_data.cmb_temperature_floor  = 1;
+    my_grackle_data->cmb_temperature_floor  = 1;
     // Flag to enable a UV background. If enabled, the cooling table to be used must be specified with the grackle_data_file parameter. Default: 0.
 #ifdef GRACKLE_OPTS
-    grackle_data.UVbackground           = All.UVBackgroundOn;   // UV background on
+    my_grackle_data->UVbackground           = All.UVBackgroundOn;   // UV background on
 #else
-    grackle_data.UVbackground           = 0;                  // UV background on
+    my_grackle_data->UVbackground           = 0;                  // UV background on
 #endif
     // Flag to enable Compton heating from an X-ray background following Madau & Efstathiou (1999). Default: 0.
-    grackle_data.Compton_xray_heating   = 1;
+    my_grackle_data->Compton_xray_heating   = 1;
     
     
     // Flag to enable H2 collision-induced emission cooling from Ripamonti & Abel (2004). Default: 0.
-    grackle_data.cie_cooling                      = 0;
+    my_grackle_data->cie_cooling                      = 0;
     // Flag to enable H2 cooling attenuation from Ripamonti & Abel (2004). Default: 0
-    grackle_data.h2_optical_depth_approximation   = 0;
+    my_grackle_data->h2_optical_depth_approximation   = 0;
     
     // Intensity of a constant Lyman-Werner H2 photo-dissociating radiation field,
     //    in units of 10-21 erg s-1 cm-2 Hz-1 sr-1. Default: 0.
-    grackle_data.LWbackground_intensity           = 0;
+    my_grackle_data->LWbackground_intensity           = 0;
     // Flag to enable suppression of Lyman-Werner flux due to Lyman-series absorption
     //    (giving a sawtooth pattern), taken from Haiman & Abel, & Rees (2000). Default: 0.
-    grackle_data.LWbackground_sawtooth_suppression = 0;
+    my_grackle_data->LWbackground_sawtooth_suppression = 0;
     
     
     /* fixed flags:: */
     
     // Flag to activate the grackle machinery:
-    grackle_data.use_grackle            = 1;                   // grackle on (duh)
+    my_grackle_data->use_grackle            = 1;                   // grackle on (duh)
     // Path to the data file containing the metal cooling and UV background tables:
-    grackle_data.grackle_data_file      = All.GrackleDataFile; // data file
+    // (expand any ENVVARs in the filename, like $HOME)
+    wordexp_t p;
+    wordexp(All.GrackleDataFile, &p, 0);
+    if(ThisTask == 0)
+        printf("expanded GrackleDataFile from %s to %s\n", All.GrackleDataFile, p.we_wordv[0]);
+    strcpy(All.GrackleDataFile, p.we_wordv[0]);
+    wordfree(&p);
+
+    my_grackle_data->grackle_data_file      = All.GrackleDataFile; // data file
     // Flag to include radiative cooling and actually update the thermal energy during the
     // chemistry solver. If off, the chemistry species will still be updated. The most
     // common reason to set this to off is to iterate the chemistry network to an equilibrium state. Default: 1.
-    grackle_data.with_radiative_cooling = 1;                   // cooling on
+    my_grackle_data->with_radiative_cooling = 1;                   // cooling on
     // The ratio of specific heats for an ideal gas. A direct calculation for the molecular component is used if primordial_chemistry > 1. Default: 5/3.
-    grackle_data.Gamma                  = GAMMA;              // our eos set in Config.sh
+    my_grackle_data->Gamma                  = GAMMA;              // our eos set in Config.sh
     // Flag to control which primordial chemistry network is used (set by Config file)
 #ifndef GRACKLE_CHEMISTRY
-    grackle_data.primordial_chemistry = 0;                     // fully tabulated cooling
+    my_grackle_data->primordial_chemistry = 0;                     // fully tabulated cooling
 #else
-    grackle_data.primordial_chemistry = GRACKLE_CHEMISTRY;
+    my_grackle_data->primordial_chemistry = GRACKLE_CHEMISTRY;
 #endif
     
-    // Set initial expansion factor (for internal units).
-    // Set expansion factor to 1 for non-cosmological simulation.
-    double a_value = 1.0;
-    if(All.ComovingIntegrationOn) a_value = All.TimeBegin;
-    
     // Finally, initialize the chemistry object.
-    if (initialize_chemistry_data(&All.GrackleUnits, a_value) == 0) {
+    if (initialize_chemistry_data(&All.GrackleUnits) == 0) {
         fprintf(stderr, "Error in initialize_chemistry_data.\n");
         exit(ENDRUNVAL);
     }
@@ -378,9 +396,9 @@ neutral gas conditions\n");
         fflush(stdout);
     for(i=0;i<12;i++)
         species[i]=1.0e-20;
-    species[0]=HYDROGEN_MASSFRAC;//grackle_data.HydrogenFractionByMass;
-    species[2]=(1-HYDROGEN_MASSFRAC);//grackle_data.HydrogenFractionByMass);
-    //species[9]=grackle_data.DeuteriumToHydrogenRatio*species[0];
+    species[0]=HYDROGEN_MASSFRAC;//my_grackle_data->HydrogenFractionByMass;
+    species[2]=(1-HYDROGEN_MASSFRAC);//my_grackle_data->HydrogenFractionByMass);
+    //species[9]=my_grackle_data->DeuteriumToHydrogenRatio*species[0];
   }
 
   if(ThisTask==0)
@@ -397,7 +415,7 @@ neutral gas conditions\n");
   {
        if(P[i].Type==0)
        {
-             SphP[i].Ne      =DMAX(species[5] ,1.0e-20);
+             SphP[i].Ne     =DMAX(species[5] ,1.0e-20);
              SphP[i].grHI   =DMAX(species[0] ,1.0e-20);
              SphP[i].grHII  =DMAX(species[1] ,1.0e-20);
              SphP[i].grHeI  =DMAX(species[2] ,1.0e-20);

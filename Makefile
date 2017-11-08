@@ -99,8 +99,8 @@ OPTIMIZE = -Wall  -g   # optimization and warning flags (default)
 
 MPICHLIB = #
 
-GRACKLEINCL = -I./grackle/local/include
-GRACKLELIBS = -L./grackle/local/lib -lgrackle -lhdf5
+GRACKLEINCL =
+GRACKLELIBS = -lgrackle -lhdf5
 
 HDF5_HOME   = /usr
 HDF5LIB     = -lhdf5
@@ -593,13 +593,9 @@ FFTW_LIBS=
 HDF5INCL = -DH5_USE_16_API
 HDF5LIB  = -lhdf5 -lz
 OPT     += #
-
-
-tmp := $(shell cd grackle && csh ./configure)
-tmp := $(shell echo "CONFIG_MACHINE = darwin" > grackle/src/clib/Make.config.machine)
-
-tmp := $(shell git checkout grackle/src/clib/Make.mach.darwin)
-tmp := $(shell echo "MACH_INSTALL_PREFIX = $(PWD)/grackle/local" >> grackle/src/clib/Make.mach.darwin)
+GRACKLEDIR  = $(HOME)/local/grackle
+GRACKLEINCL = -I$(GRACKLEDIR)/include
+GRACKLELIBS = -L$(GRACKLEDIR)/lib -lgrackle -lhdf5 -Wl,-rpath -Wl,$(GRACKLEDIR)/lib
 
 endif
 
@@ -615,12 +611,9 @@ FFTW_LIBS= -L$(HOME)/local/fftw-2.1.5/lib
 HDF5INCL = -I$(HOME)/local/miniconda3/envs/hdf/include -DH5_USE_16_API
 HDF5LIB  = -L$(HOME)/local/miniconda3/envs/hdf/lib -lhdf5 -lz
 MPICHLIB = -L$(HOME)/local/openmpi-2.0.2/lib -lgfortran
-
-tmp := $(shell cd grackle && csh ./configure)
-
-tmp := $(shell echo "CONFIG_MACHINE = linux-gnu " > grackle/src/clib/Make.config.machine)
-tmp := $(shell git checkout grackle/src/clib/Make.mach.linux-gnu)
-tmp := $(shell echo "MACH_INSTALL_PREFIX = $(PWD)/grackle/local" >> grackle/src/clib/Make.mach.linux-gnu)
+GRACKLEDIR  = $(HOME)/local/grackle
+GRACKLEINCL = -I$(GRACKLEDIR)/include
+GRACKLELIBS = -L$(GRACKLEDIR)/lib -lgrackle -lhdf5 -Wl,-rpath -Wl,$(GRACKLEDIR)/lib
 
 endif
 
@@ -636,13 +629,10 @@ FFTW_INCL=
 FFTW_LIBS= 
 HDF5INCL = -DH5_USE_16_API
 HDF5LIB  = 
-MPICHLIB = 
-
-tmp := $(shell cd grackle && csh ./configure)
-
-tmp := $(shell echo "CONFIG_MACHINE = linux-gnu " > grackle/src/clib/Make.config.machine)
-tmp := $(shell git checkout grackle/src/clib/Make.mach.linux-gnu)
-tmp := $(shell echo "MACH_INSTALL_PREFIX = $(PWD)/grackle/local" >> grackle/src/clib/Make.mach.linux-gnu)
+MPICHLIB =
+GRACKLEDIR  = $(HOME)/local/grackle
+GRACKLEINCL = -I$(GRACKLEDIR)/include
+GRACKLELIBS = -L$(GRACKLEDIR)/lib -lgrackle -lhdf5 -Wl,-rpath -Wl,$(GRACKLEDIR)/lib
 
 endif
 
@@ -861,13 +851,7 @@ clean:
 	rm -f $(OBJS) $(FOBJS) $(EXEC) *.oo *.c~ compile_time_info.c GIZMO_config.h
 
 all:
-	make -C grackle/src/clib/ HDF5_HOME="$(HDF5_HOME)"
-	mkdir -p grackle/local
-	mkdir -p grackle/local/include
-	mkdir -p grackle/local/lib
-	make -C grackle/src/clib/ install
 	make $(EXEC)
 
 cleanall:
-	make -C grackle/src/clib clean
 	make clean

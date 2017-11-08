@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <gsl/gsl_rng.h>
 #include <ctype.h>
+#include <wordexp.h>
 
 #include "allvars.h"
 #include "proto.h"

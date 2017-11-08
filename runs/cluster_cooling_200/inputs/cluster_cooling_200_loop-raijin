@@ -21,7 +21,6 @@
 cd $PBS_O_WORKDIR
 
 source $HOME/.bashrc
-export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
 
 # number of processors
 NP=$(wc -l $PBS_NODEFILE | awk '{print $1}')
@@ -62,7 +61,7 @@ while [ ! -f $INPUTS_DIR/end ]; do
 
 	RESTART_TYPE=2 # restart from snapshot file
 	
-	time mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE  1>>$OUTPUT_FILE 2>&1
+	time mpirun -hostfile $PBS_NODEFILE -np $NP $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE  1>>$OUTPUT_FILE 2>&1
 	
 done
 
