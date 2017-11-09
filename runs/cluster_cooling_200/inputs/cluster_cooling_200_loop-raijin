@@ -46,12 +46,11 @@ while [ ! -f $INPUTS_DIR/end ]; do
 	#   The simulation is only allowed to run if `prepare_for_restart.py` decides it's okay, and deletes the `end` file
 	touch $INPUTS_DIR/end
 
-	echo "about to enter 'prepare_for_restart.py'" 1>>$OUTPUT_FILE 2>&1
 	cd scripts
+	echo "about to enter 'prepare_for_restart.py'" 1>>../$OUTPUT_FILE 2>&1
 	python3 prepare_for_restart.py ../$INPUTS_DIR/end ../$RUN_DIR 1>>../$OUTPUT_FILE 2>&1
+	echo "done with 'prepare_for_restart.py'" 1>>../$OUTPUT_FILE 2>&1
 	cd $PBS_O_WORKDIR
-
-	echo "done with 'prepare_for_restart.py'" 1>>$OUTPUT_FILE 2>&1
 
 	# make sure we don't run the code if the python failed, or decided the code shouldn't be run
 	if [ -f $INPUTS_DIR/end ]; then
