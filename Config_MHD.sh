@@ -204,9 +204,6 @@ GRACKLE_OPTS			# additional options for GRACKLE chemistry solver (Lupi)
 # # GRACKLE_FIX_TEMPERATURE	# if the initial temperature is provided via parameter file, the intial internal energy is computed taking into account the mmw dependence on density too (Lupi)
 # # GRACKLE_FULLYIMPLICIT		# fully implicit solution for Grackle (customized version of the library) (Lupi)
 
-GENTRY_FB
-#WINDS
-
 ####################################################################################################
 ####################################################################################################
 ####################################################################################################

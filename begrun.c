@@ -326,56 +326,6 @@ void begrun(void)
     All.Ti_nextoutput = find_next_outputtime(All.Ti_Current);
 
   All.TimeLastRestartFile = CPUThisRun;
-
-
-#ifdef GENTRY_FB
-
-    All.N_SNe = count_lines_in_file(All.SNeDataFile) - 1;
-    if(ThisTask == 0)
-    {
-      printf("total N_SNe: %d \n", All.N_SNe);
-    }
-    
-
-    All.SN_position_x = (double*) malloc(All.N_SNe*sizeof(double));
-    All.SN_position_y = (double*) malloc(All.N_SNe*sizeof(double));
-    All.SN_position_z = (double*) malloc(All.N_SNe*sizeof(double));
-    {
-      int i;
-      for(i=0; i<All.N_SNe; i++) 
-      {
-        All.SN_position_x[i] = boxHalf*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
-        All.SN_position_y[i] = boxHalf*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
-        All.SN_position_z[i] = boxHalf*(CM_PER_MPC/1e6)/All.UnitLength_in_cm;
-      }
-    }
-
-
-    All.SN_time       = (double*) malloc(All.N_SNe * sizeof(double));
-    All.SN_mass       = (double*) malloc(All.N_SNe * sizeof(double));
-    All.SN_mass_Z     = (double*) malloc(All.N_SNe * sizeof(double));
-
-// #ifdef WINDS
-    All.wind_mass     = (double*) malloc(All.N_SNe * sizeof(double));    
-// #endif
-
-    read_SNe_file(All.SNeDataFile, All.N_SNe,
-                  All.SN_time, All.SN_mass, All.SN_mass_Z, All.wind_mass);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    {
-      int i;
-      for(i=0; i<All.N_SNe; ++i)
-      {
-        if(ThisTask == 0)
-        {
-          printf("CHECK: SN %d at time %e [code units] with mass %e [code units] \n", i, All.SN_time[i], All.SN_mass[i]);
-        }
-      }
-    }
-
-#endif
 }
 
 
@@ -1037,12 +987,6 @@ void read_parameter_file(char *fname)
 #ifdef GRACKLE
         strcpy(tag[nt], "GrackleDataFile");
         addr[nt] = All.GrackleDataFile;
-        id[nt++] = STRING;
-#endif
-
-#ifdef GENTRY_FB
-        strcpy(tag[nt], "SNeDataFile");
-        addr[nt] = All.SNeDataFile;
         id[nt++] = STRING;
 #endif
         

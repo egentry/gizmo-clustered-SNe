@@ -1162,10 +1162,6 @@ extern struct global_data_all_processes
 #ifdef GRACKLE
     char GrackleDataFile[100];
 #endif
-
-#ifdef GENTRY_FB
-    char SNeDataFile[128];
-#endif
     
   /*! table with desired output times */
   double OutputListTimes[MAXLEN_OUTPUTLIST];
@@ -1302,24 +1298,6 @@ extern struct global_data_all_processes
   int AccretionMode;
 #endif
 //End A Lupi
-
-#ifdef GENTRY_FB
-    int N_SNe;
-
-    // dynamically allocated arrays
-    double* SN_position_x;
-    double* SN_position_y;
-    double* SN_position_z;
-
-    double* SN_time;
-    double* SN_mass;
-    double* SN_mass_Z;
-    
-// #ifdef WINDS
-    double* wind_mass;
-// #endif
-
-#endif
 
 }
 All;

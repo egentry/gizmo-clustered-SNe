@@ -637,10 +637,3 @@ void *addBHFB_evaluate_secondary(void *p);
 double compute_released_energy(int);
 double compute_feedback_luminosity(int i);
 #endif
-
-#ifdef GENTRY_FB
-void gentry_fb_calc();
-int count_lines_in_file(char *);
-void read_SNe_file(char * filename, int N_SNe, 
-  double *SN_time, double *SN_mass, double *SN_mass_Z, double *wind_mass);
-#endif

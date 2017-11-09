@@ -202,15 +202,8 @@ void calculate_non_standard_physics(void)
     /* PFH set of feedback routines */
     compute_stellar_feedback();
 #endif
-    
-#ifdef GENTRY_FB
-    // //compute the actual SNe feedback
-    // gentry_fb_calc();
-#endif
-    
-    
-    
-    
+
+
 #ifdef BH_LUPI
     CPU_Step[CPU_MISC] += measure_time();
     blackhole_accretion_calc();

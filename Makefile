@@ -729,10 +729,6 @@ ifeq (CREASEY,$(findstring CREASEY,$(CONFIGVARS)))
 OBJS    += creasey.o
 endif
 
-ifeq (GENTRY_FB,$(findstring GENTRY_FB,$(CONFIGVARS)))
-OBJS    += gentry_fb.o
-endif
-
 ifeq (GALSF_FB_RPWIND_LOCAL,$(findstring GALSF_FB_RPWIND_LOCAL,$(CONFIGVARS)))
 OBJS    += galaxy_sf/rp_localwinds.o
 endif
