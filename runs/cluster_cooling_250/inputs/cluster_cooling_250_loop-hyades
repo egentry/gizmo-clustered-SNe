@@ -1,19 +1,21 @@
 #!/bin/bash
 #
-#PBS -l nodes=20:ppn=16
-#PBS -l walltime=22:00:00
+#PBS -l nodes=2:ppn=16
+#PBS -l walltime=48:00:00
 #
-#PBS -q normal
+#
+#PBS -q hyper
+#
 #
 #PBS -M egentry@ucsc.edu
 #PBS -m e
 #
-#PBS -e ./runs/cluster_cooling_300/inputs/
-#PBS -o ./runs/cluster_cooling_300/inputs/
+#PBS -e ./logs/
+#PBS -o ./logs/
 #
 #PBS -S /bin/bash
 #
-#PBS -N 300_HD
+#PBS -N 250_HD
 #
 
 cd $PBS_O_WORKDIR
@@ -23,12 +25,12 @@ source $HOME/.bashrc
 # number of processors
 NP=$(wc -l $PBS_NODEFILE | awk '{print $1}')
 
-RUN_NAME=cluster_cooling_300
+RUN_NAME=cluster_cooling_250
 RUN_DIR=./runs/$RUN_NAME
 
 INPUTS_DIR=$RUN_DIR/inputs
 
-OUTPUT_FILE=$INPUTS_DIR/${PBS_JOBNAME}.byhand.o${PBS_JOBID}
+OUTPUT_FILE=./logs/${PBS_JOBNAME}.byhand.o${PBS_JOBID}
 
 touch $OUTPUT_FILE
 

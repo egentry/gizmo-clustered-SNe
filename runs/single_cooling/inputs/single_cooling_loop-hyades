@@ -3,17 +3,19 @@
 #PBS -l nodes=2:ppn=16
 #PBS -l walltime=48:00:00
 #
+#
 #PBS -q hyper
+#
 #
 #PBS -M egentry@ucsc.edu
 #PBS -m e
 #
-#PBS -e ./runs/single/inputs/
-#PBS -o ./runs/single/inputs/
+#PBS -e ./logs/
+#PBS -o ./logs/
 #
 #PBS -S /bin/bash
 #
-#PBS -N single_adiabatic
+#PBS -N single_HD
 #
 
 cd $PBS_O_WORKDIR
@@ -23,12 +25,12 @@ source $HOME/.bashrc
 # number of processors
 NP=$(wc -l $PBS_NODEFILE | awk '{print $1}')
 
-RUN_NAME=single
+RUN_NAME=single_cooling
 RUN_DIR=./runs/$RUN_NAME
 
 INPUTS_DIR=$RUN_DIR/inputs
 
-OUTPUT_FILE=$INPUTS_DIR/${PBS_JOBNAME}.byhand.o${PBS_JOBID}
+OUTPUT_FILE=./logs/${PBS_JOBNAME}.byhand.o${PBS_JOBID}
 
 touch $OUTPUT_FILE
 

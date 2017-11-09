@@ -2,7 +2,8 @@
 3D simulations of clustered SNe with cooling, and with/without MHD
 -------
 
-Author: Eric Gentry   (gentry.e@gmail.com; egentry@ucsc.edu)   
+Current Author: Eric Gentry   (gentry.e@gmail.com; egentry@ucsc.edu)   
+(Note: There have been many authors of GIZMO and GADGET before that. I'm only claiming to be the author of the modifications, setup and analysis that's specific to my project.)
 
 Licensed under the GNU General Public License (v3)
 
@@ -29,7 +30,6 @@ For more details about the project see:
 I've also added a bunch of python scripts/jupyter notebooks to help generate initial conditions, add SN feedback particles, and visualize the results.  If you're curious, you can check them out in the `scripts` directory.
 
 If you're wondering where to start, here are a few key files to look at:
- - Any of the `runs/*/inputs/*test*` files. Those are qsub batch scripts.
- - Any of the `runs/*/inputs/*params.base` files. Files of those form are submitted as runtime parameter files for GIZMO. (In practice I don't actually submit `*params.base` -- I use them to build `*params.restart` files, adjusting things like `InitCondFile`, `TimeBegin`, `TimeMax`, `TimeOfFirstSnapshot` and `TimeBetSnapshot` for the appropriate values at a given part of the simulation.)
  - `scripts/generate_ICs.ipynb`. As the name suggests, it's the script that I use to generate the initial conditions for my simulations (uniform ISM, with/without magnetic fields, with varying box sizes and varying resolution).  At the bottom it also has a section "What to do next?" which will help you get going.
-
+ - Any of the `runs/*/inputs/*_loop-*` files. Those are qsub batch scripts.
+ - Any of the `runs/*/inputs/*params.base` files. Files of this form are submitted as input runtime parameter files for GIZMO. (In practice I don't actually submit `*params.base` -- I use them to build `*params.restart` files, adjusting things like `InitCondFile`, `TimeBegin`, `TimeMax`, `TimeOfFirstSnapshot` and `TimeBetSnapshot` for the appropriate values at a given part of the simulation.)

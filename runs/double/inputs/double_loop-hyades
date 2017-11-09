@@ -3,13 +3,15 @@
 #PBS -l nodes=2:ppn=16
 #PBS -l walltime=48:00:00
 #
+#
 #PBS -q hyper
+#
 #
 #PBS -M egentry@ucsc.edu
 #PBS -m e
 #
-#PBS -e ./runs/double/inputs/
-#PBS -o ./runs/double/inputs/
+#PBS -e ./logs/
+#PBS -o ./logs/
 #
 #PBS -S /bin/bash
 #
@@ -28,7 +30,7 @@ RUN_DIR=./runs/$RUN_NAME
 
 INPUTS_DIR=$RUN_DIR/inputs
 
-OUTPUT_FILE=$INPUTS_DIR/${PBS_JOBNAME}.byhand.o${PBS_JOBID}
+OUTPUT_FILE=./logs/${PBS_JOBNAME}.byhand.o${PBS_JOBID}
 
 touch $OUTPUT_FILE
 
