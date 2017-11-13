@@ -604,16 +604,20 @@ ifeq ($(SYSTYPE),"hyades")
 CC       =  mpicc
 CXX      =  mpicxx
 OPTIMIZE =  -g -Wall
-GSL_INCL = -I$(HOME)/local/gsl-2.1/include
-GSL_LIBS = -L$(HOME)/local/gsl-2.1/lib
-FFTW_INCL= -I$(HOME)/local/fftw-2.1.5/include
-FFTW_LIBS= -L$(HOME)/local/fftw-2.1.5/lib
-HDF5INCL = -I$(HOME)/local/miniconda3/envs/hdf/include -DH5_USE_16_API
-HDF5LIB  = -L$(HOME)/local/miniconda3/envs/hdf/lib -lhdf5 -lz
-MPICHLIB = -L$(HOME)/local/openmpi-2.0.2/lib -lgfortran
-GRACKLEDIR  = $(HOME)/local/grackle
-GRACKLEINCL = -I$(GRACKLEDIR)/include
-GRACKLELIBS = -L$(GRACKLEDIR)/lib -lgrackle -lhdf5 -Wl,-rpath -Wl,$(GRACKLEDIR)/lib
+GSL_DIR  = $(HOME)/local/gsl-2.4
+GSL_INCL = -I$(GSL_DIR)/include
+GSL_LIBS = -L$(GSL_DIR)/lib -Wl,-rpath -Wl,$(GSL_DIR)/lib
+FFTW_DIR = $(HOME)/local/fftw-2.1.5
+FFTW_INCL= -I$(FFTW_DIR)/include
+FFTW_LIBS= -L$(FFTW_DIR)/lib -Wl,-rpath -Wl,$(FFTW_DIR)/lib
+HDF5_DIR = $(HOME)/anaconda3/envs/gizmo
+HDF5INCL = -I$(HDF5_DIR)/include -DH5_USE_16_API
+HDF5LIB  = -L$(HDF5_DIR)/lib -lhdf5 -lz -Wl,-rpath -Wl,$(HDF5_DIR)/lib
+MPI_DIR  = -L$(HOME)/local/openmpi-3.0.0
+MPICHLIB = -L$(MPI_DIR)/lib -lgfortran -Wl,-rpath -Wl,$(MPI_DIR)/lib
+GRACKLE_DIR  = $(HOME)/local/grackle
+GRACKLEINCL = -I$(GRACKLE_DIR)/include
+GRACKLELIBS = -L$(GRACKLE_DIR)/lib -lgrackle -lhdf5 -Wl,-rpath -Wl,$(GRACKLE_DIR)/lib
 
 endif
 
@@ -630,9 +634,9 @@ FFTW_LIBS=
 HDF5INCL = -DH5_USE_16_API
 HDF5LIB  = 
 MPICHLIB =
-GRACKLEDIR  = $(HOME)/local/grackle
-GRACKLEINCL = -I$(GRACKLEDIR)/include
-GRACKLELIBS = -L$(GRACKLEDIR)/lib -lgrackle -lhdf5 -Wl,-rpath -Wl,$(GRACKLEDIR)/lib
+GRACKLE_DIR  = $(HOME)/local/grackle
+GRACKLEINCL = -I$(GRACKLE_DIR)/include
+GRACKLELIBS = -L$(GRACKLE_DIR)/lib -lgrackle -lhdf5 -Wl,-rpath -Wl,$(GRACKLE_DIR)/lib
 
 endif
 
