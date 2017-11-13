@@ -241,7 +241,7 @@ def plot_projected_density(ts, snapshot_number, snapshot_number_to_index_map,
 
     p = yt.ProjectionPlot(ds, "x", ("gas", "density"))
     p.set_log('density', False)
-    p.set_cmap(field="density", cmap="viridis")
+    # p.set_cmap(field="density", cmap="viridis")
     p.annotate_timestamp(corner="upper_left", draw_inset_box=True)
 
     t = ds.current_time.convert_to_cgs().value / Myr
@@ -321,7 +321,7 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
         # s.set_zlim(field, 1e-3, 1e1)
         s.set_colorbar_label(field, "Density $ [ m_\mathrm{H} \; \mathrm{cm}^{-3} ] $")
 
-    s.set_cmap(field=field, cmap="viridis")
+    # s.set_cmap(field=field, cmap="viridis")
     s.annotate_timestamp(corner="upper_left", draw_inset_box=True)
     t = ds.current_time.convert_to_cgs().value / Myr
     N_SNe_so_far = np.sum(t > SN_times)
@@ -376,7 +376,8 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
                        field_type="all",
                        save_plot=True,
                        show_plot=True,
-                       seaborn_style="ticks"):
+                       seaborn_style="ticks",
+                       bins=50):
     """ Creates [and optionally saves] a density-temperature phase diagram
 
     Inputs
@@ -403,6 +404,8 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
          (you might want to disable this for non-interactive sessions)
     seaborn_style : Optional(str)
         - a valid argument for `seaborn.axes_style`
+    bins : Optional(int)
+        - number of bins in the x and y axes
 
     Returns
     -------
@@ -417,12 +420,18 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
                                (field_type, "density"),
                                (field_type, "temperature"),
                                z_fields=(field_type, weight_field),
-                               x_bins=100,
-                               y_bins=100,)
+                               x_bins=bins,
+                               y_bins=bins,)
 
     if weight_field == "particle_mass":
         ppp.profile.set_field_unit("particle_mass", "Msun")
         ppp.plots[(field_type, "particle_mass")].zmin, ppp.plots[(field_type, "particle_mass")].zmax = (None, None)
+
+    elif weight_field == "cooling_rate":
+        ppp.profile.set_field_unit("cooling_rate", "erg / Myr")
+        ppp.plots[(field_type, "cooling_rate")].zmin, ppp.plots[(field_type, "cooling_rate")].zmax = (None, None)
+
+
 
     ppp.set_unit("density", "amu/cm**3")
     ppp.set_xlabel("Density $ [ m_\mathrm{H} \; \mathrm{cm}^{-3} ] $")
@@ -432,9 +441,9 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
 
     ppp.set_log("density", True)
     ppp.set_log("temperature", True)
-    ppp.set_log("particle_mass", True)
+    ppp.set_log(weight_field, True)
 
-    ppp.set_background_color(weight_field, color="white")
+    ppp.set_background_color((field_type, weight_field), color="white")
 
     if show_plot:
         with sns.axes_style(seaborn_style):
@@ -444,7 +453,7 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
         subdir = "phase_plot"
         if not os.path.exists(os.path.join(plots_dir, subdir)):
             os.mkdir(os.path.join(plots_dir, subdir))
-        plot_name = os.path.join(subdir, "snapshot_{:0>3}_{}".format(snapshot_number, weight_field))
+        plot_name = os.path.join(subdir, "snapshot_{:0>3}_{}-{}".format(snapshot_number, weight_field, field_type))
         yt_plot_saver(ppp, plot_name, plots_dir)
 
     return ppp
