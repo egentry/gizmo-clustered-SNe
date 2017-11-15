@@ -9,20 +9,39 @@ from pygrackle.utilities.physical_constants import \
     sec_per_Myr, \
     cm_per_mpc
 
+from units import M_solar, pc, Myr
+
 import yt
 
 
 def wrapped_initializer(mass_unit_cgs, length_unit_cgs, time_unit_cgs,
                         verbose=False):
-    """ Create a `grackle.chemistry_data` 
+    """ Create a `grackle.chemistry_data` object
+
+    Inputs
+    ------
+    mass_units_cgs : float
+    length_unit_cgs : float
+    time_unit_cgs : float
+    verbose : Optional(bool)
+
+    Returns
+    -------
+    rval : int
+        return value from Grackle. Returns 1 for success, 0 for failure.
+    my_chemistry : `grackle.chemistry_data` object
 
     """
     if verbose:
         print("""`grackle_helpers.wrapped_initializer` is setting up grackle assuming code units:
-    mass   : {} g
-    length : {} cm
-    time   : {} s
-""".format(mass_unit_cgs, length_unit_cgs, time_unit_cgs))
+    mass   : {:.3} M_solar
+    length : {:.3} pc
+    time   : {:.3} Myr
+""".format(
+          mass_unit_cgs / M_solar,
+          length_unit_cgs / pc,
+          time_unit_cgs / Myr,
+        ))
 
     current_redshift = 0.
 
