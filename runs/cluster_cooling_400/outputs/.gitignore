@@ -1,0 +1,6 @@
+*.hdf5
+*.hdf5.tar.gz
+plots
+*decompress*
+*compress*
+cluster_cooling_400.db
