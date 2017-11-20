@@ -271,9 +271,9 @@ void InitGrackle(void)
     my_grackle_data->three_body_rate        = 0;
     
 #ifdef GRACKLE_OPTS
-    my_grackle_data->metal_cooling          = All.MetalCooling;    // metal cooling on
+    my_grackle_data->metal_cooling          = All.MetalCooling;    // read params file to enable/disable metal cooling
 #else
-    my_grackle_data->metal_cooling          = 0;                   // metal cooling on
+    my_grackle_data->metal_cooling          = 0;                   // metal cooling off
 #endif
     my_grackle_data->h2_on_dust             = 0;                   // dust cooling/chemistry off
     my_grackle_data->photoelectric_heating            = 0;
@@ -283,9 +283,9 @@ void InitGrackle(void)
     my_grackle_data->cmb_temperature_floor  = 1;
     // Flag to enable a UV background. If enabled, the cooling table to be used must be specified with the grackle_data_file parameter. Default: 0.
 #ifdef GRACKLE_OPTS
-    my_grackle_data->UVbackground           = All.UVBackgroundOn;   // UV background on
+    my_grackle_data->UVbackground           = All.UVBackgroundOn;   // read params file to enable/disable UV background
 #else
-    my_grackle_data->UVbackground           = 0;                  // UV background on
+    my_grackle_data->UVbackground           = 0;                  // UV background off
 #endif
     // Flag to enable Compton heating from an X-ray background following Madau & Efstathiou (1999). Default: 0.
     my_grackle_data->Compton_xray_heating   = 1;
