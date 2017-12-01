@@ -101,10 +101,11 @@ def cooling_rate(field, data, my_chemistry):
     fc = FluidContainer(my_chemistry, data["PartType0", "Masses"].shape[0])
 
     fc["density"][:] = data["PartType0", "Density"]
-    fc["metal"][:] = data["PartType0", "Density"] * data["PartType0", "Metallicity"]
-    fc["x-velocity"][:] = data["PartType0", "Velocities"][:,0]
-    fc["y-velocity"][:] = data["PartType0", "Velocities"][:,1]
-    fc["z-velocity"][:] = data["PartType0", "Velocities"][:,2]
+    fc["metal"][:] = data["PartType0", "Density"] * data["PartType0",
+                                                         "Metallicity"]
+    fc["x-velocity"][:] = data["PartType0", "Velocities"][:, 0]
+    fc["y-velocity"][:] = data["PartType0", "Velocities"][:, 1]
+    fc["z-velocity"][:] = data["PartType0", "Velocities"][:, 2]
     fc["energy"][:] = data["PartType0", "InternalEnergy"]
 
     fc.calculate_temperature()
@@ -114,8 +115,9 @@ def cooling_rate(field, data, my_chemistry):
     fc.solve_chemistry(dt.value / my_chemistry.time_units)
 
     de = (data["PartType0", "InternalEnergy"].value - fc["energy"])
-    de *= yt.units.Msun * yt.units.pc**2 / yt.units.Myr**2
+    dE = de * data["PartType0", "Masses"].value
+    dE *= yt.units.Msun * yt.units.pc**2 / yt.units.Myr**2
 
-    de_dt = de / dt
+    dE_dt = dE / dt
 
-    return de_dt
+    return dE_dt

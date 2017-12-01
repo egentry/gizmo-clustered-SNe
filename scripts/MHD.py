@@ -21,8 +21,8 @@ def get_field_lines_filename_from_ds(ds, plots_dir):
 
 def visualize_magnetic_field_layout(interpolator, box_size=200):
     plt.figure()
-    y = np.linspace(-box_size, box_size, num=400)
-    z = np.linspace(-box_size, box_size, num=400)
+    y = np.linspace(-box_size/2, box_size/2, num=400)
+    z = np.linspace(-box_size/2, box_size/2, num=400)
     x = np.array([0])
 
     xx, yy, zz = np.meshgrid(x, y, z)
@@ -78,26 +78,35 @@ def plot_field_lines(df_lines, ax,
                 **plot_kwargs)
 
 
-def calculate_magnetic_field_lines(ds, plots_dir, make_plots=True):
+def calculate_magnetic_field_lines(ds, plots_dir,
+                                   make_plots=True,
+                                   num_lines=16,
+                                   box_size_for_lines=400,
+                                   filename=None):
     dd = ds.all_data()
     coords = (dd["PartType0", "Coordinates"] - ds.domain_center).value
     magnetic_field = dd["PartType0", "MagneticField"].value
 
     box_size = ds.domain_width.value[0]
 
-    slice_filter = np.abs(coords[:, 0]) < 40
+    slice_filter =  (np.abs(coords[:, 0]) < 40) \
+                  & (np.abs(coords[:, 1]) < 1.25*box_size_for_lines/2) \
+                  & (np.abs(coords[:, 2]) < 1.25*box_size_for_lines/2)
+
     interpolator = interpolate.LinearNDInterpolator(
         coords[slice_filter],
         magnetic_field[slice_filter],
     )
 
     if make_plots:
-        visualize_magnetic_field_layout(interpolator, box_size=box_size/4)
+        visualize_magnetic_field_layout(interpolator,
+                                        box_size=box_size_for_lines)
 
     # # INTEGRATE
-    y_0s = np.linspace(-box_size/2, box_size/2, num=16)[1:-1]
+    y_0s = np.linspace(-box_size_for_lines/2, box_size_for_lines/2,
+                       num=num_lines+2)[1:-1]
 
-    max_coord = box_size/2
+    max_coord = box_size_for_lines/2
 
     ys_integrated = [None]*y_0s.size
 
@@ -114,7 +123,8 @@ def calculate_magnetic_field_lines(ds, plots_dir, make_plots=True):
             data={"line_id": i, "y": y_integrated.squeeze(), "z": zs})
          for i, y_integrated in enumerate(ys_integrated)])
 
-    filename = get_field_lines_filename_from_ds(ds, plots_dir)
+    if filename is None:
+        filename = get_field_lines_filename_from_ds(ds, plots_dir)
 
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     df_lines.to_csv(filename, index=False)

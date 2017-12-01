@@ -46,8 +46,6 @@ def total_kinetic_energy_of_snapshot(snapshot_filename,
 def total_internal_energy_of_snapshot(snapshot_filename,
                                       particle_type="PartType0"):
     with h5py.File(snapshot_filename, mode="r") as f:
-        masses_shape = f[particle_type]["Masses"].shape
-        new_shape = masses_shape + (1,)
 
         E_int = np.sum(
             np.array(f[particle_type]["InternalEnergy"], dtype=float) *
@@ -57,7 +55,26 @@ def total_internal_energy_of_snapshot(snapshot_filename,
     return E_int * M_solar * (pc / Myr)**2
 
 
+def total_magnetic_energy_of_snapshot(snapshot_filename,
+                                      particle_type="PartType0"):
+    with h5py.File(snapshot_filename, mode="r") as f:
+        if "MagneticField" not in f[particle_type].keys():
+            return 0
+
+        masses_shape = f[particle_type]["Masses"].shape
+        new_shape = masses_shape + (1,)
+
+        E_mag = np.sum(
+            np.array(f[particle_type]["MagneticField"], dtype=float)**2 *
+            np.reshape(f[particle_type]["Masses"], new_shape) /
+            np.reshape(f[particle_type]["Density"], new_shape),
+            dtype=float) / (8 * np.pi)
+
+    return E_mag * (pc)**3 * (1e-6)**2
+
+
 def total_energy_of_snapshot(snapshot_filename):
     E_tot = total_internal_energy_of_snapshot(snapshot_filename) \
+            + total_magnetic_energy_of_snapshot(snapshot_filename) \
             + total_kinetic_energy_of_snapshot(snapshot_filename)
     return E_tot

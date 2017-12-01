@@ -27,6 +27,7 @@ from snapshot_helpers import \
     total_mass_of_snapshot, \
     total_radial_momentum_of_snapshot, \
     total_kinetic_energy_of_snapshot, \
+    total_magnetic_energy_of_snapshot, \
     total_internal_energy_of_snapshot
 
 import sqlite3
@@ -186,7 +187,7 @@ def add_snapshot_if_missing(snapshot_filename, run_name, verbose=False):
     mass = total_mass_of_snapshot(snapshot_filename)
     e_int = total_internal_energy_of_snapshot(snapshot_filename)
     e_kin = total_kinetic_energy_of_snapshot(snapshot_filename)
-    e_mag = 0
+    e_mag = total_magnetic_energy_of_snapshot(snapshot_filename)
     momentum = total_radial_momentum_of_snapshot(snapshot_filename)
     time = get_snapshot_time(snapshot_filename)
     

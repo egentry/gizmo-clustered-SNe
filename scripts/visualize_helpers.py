@@ -282,7 +282,9 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
                       save_plot=True,
                       show_plot=True,
                       seaborn_style="white",
-                      add_magnetic_field_lines=False):
+                      add_magnetic_field_lines=False,
+                      font_size=None,
+                      SlicePlot_kwargs=dict()):
     """ Creates [and optionally saves] a plot of `field`, sliced at x=0
 
     Inputs
@@ -310,11 +312,14 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
         - True if you want to try adding field lines to the plot
           (field lines must already be computed and saved to disk
            with filenames determined by `MHD.get_field_lines_filename_from_ds`)
-
+    font_size : Optional(None or int)
+        - font size that yt should use
+    SlicePlot_kwargs : Optional(dict)
+        - keyword arguments to be passed to `yt.SlicePlot`
     """
     i = snapshot_number_to_index_map[snapshot_number]
     ds = load_ds_from_ts(ts, i)
-    s = yt.SlicePlot(ds, "x", (field_type[field], field))
+    s = yt.SlicePlot(ds, "x", (field_type[field], field), **SlicePlot_kwargs)
 
     if field == "density":
         s.set_unit(field, "amu/cm**3")
@@ -322,7 +327,9 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
         s.set_colorbar_label(field, "Density $ [ m_\mathrm{H} \; \mathrm{cm}^{-3} ] $")
 
     # s.set_cmap(field=field, cmap="viridis")
-    s.annotate_timestamp(corner="upper_left", draw_inset_box=True)
+    s.annotate_timestamp(corner="upper_left", draw_inset_box=True,
+                         time_format="t = {time:.2f} {units}",
+                         time_unit="Myr")
     t = ds.current_time.convert_to_cgs().value / Myr
     N_SNe_so_far = np.sum(t > SN_times)
     s.annotate_text((.8, .94),
@@ -331,6 +338,10 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
                     inset_box_args={"facecolor": "darkslategray",
                                     "alpha": 0.9},
                     )
+
+    if font_size is not None:
+        s.set_font({"size": font_size})
+
     if show_plot:
         with sns.axes_style(seaborn_style):
             s.show()
