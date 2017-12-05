@@ -24,10 +24,14 @@ import warnings
 
 # ############# YT HELPERS ############
 
-@yt.derived_field(name="pressure", units="g  / s**2 / cm",
-                  sampling_type="particle")
+@yt.derived_field(("gas", "pressure"),
+                  units="auto",
+                  force_override=True,
+                  dimensions=yt.units.dimensions.pressure,
+                  sampling_type="cell")
 def _pressure(field, data):
-    return (gamma-1) * data["thermal_energy"] * data["density"]
+    return (gamma-1) * data[("gas", "thermal_energy")] * \
+     data[("gas", "density")]
 
 
 @yt.particle_filter(requires=["particle_velocity_magnitude"],
