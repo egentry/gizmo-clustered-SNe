@@ -5,10 +5,17 @@ import numpy as np
 import pandas as pd
 import yt
 import seaborn as sns
+import pickle
+from matplotlib import pyplot as plt
+import warnings
 
 from units import M_solar, m_proton, pc, yr, Myr, gamma, km, s
 import MHD
-from grackle_helpers import wrapped_initializer, temperature, cooling_rate
+from grackle_helpers import \
+    wrapped_initializer, \
+    temperature, \
+    cooling_rate, \
+    FluidContainer
 
 from snapshot_helpers import \
     total_mass_of_snapshot, \
@@ -17,12 +24,19 @@ from snapshot_helpers import \
     total_internal_energy_of_snapshot, \
     total_energy_of_snapshot
 
-from matplotlib import pyplot as plt
+#  # Boilerplate path hack to give access to full clustered_SNe package
+import sys
+import os
+if os.pardir not in sys.path[0]:
+    file_dir = os.getcwd()
+    sys.path.insert(0, os.path.join(file_dir,
+                                    os.pardir,
+                                    os.pardir))
 
-import warnings
-
+from clustered_SNe.analysis.parse import RunSummary
 
 # ############# YT HELPERS ############
+
 
 @yt.derived_field(("gas", "pressure"),
                   units="auto",
@@ -47,6 +61,14 @@ rval, my_chemistry_particles = wrapped_initializer(
     float(yt.units.Msun.to("g").value),
     float(yt.units.pc.to("cm").value),
     float(yt.units.Myr.to("s").value),
+    verbose=True,
+    )
+assert(rval == 1)
+
+rval, my_chemistry_1D = wrapped_initializer(
+    m_proton,  # grackle breaks if you try to use cgs units -_-
+    1,
+    1,
     verbose=True,
     )
 assert(rval == 1)
@@ -82,6 +104,15 @@ snapshot_filename_format = "snapshot_???.hdf5"
 def snapshot_filename_to_number(snapshot_filename):
     snapshot_number = int(os.path.basename(snapshot_filename).replace(".hdf5", "").replace("snapshot_", ""))
     return snapshot_number
+
+
+def get_dirs(run_name):
+    run_dir = os.path.join(os.path.pardir, "runs", run_name)
+
+    inputs_dir  = os.path.join(run_dir, "inputs")
+    outputs_dir = os.path.join(run_dir, "outputs")
+
+    return inputs_dir, outputs_dir
 
 
 def get_snapshot_filenames(outputs_dir,
@@ -131,9 +162,6 @@ def get_snapshot_times(ts):
     snapshot_times = np.array([ds.current_time.convert_to_cgs()
                                for ds in ts]) / Myr
     return snapshot_times
-
-
-
 
 
 def map_to_all_snapshots(outputs_dir, mapped_function):
@@ -385,6 +413,285 @@ def plot_sliced_field(ts, snapshot_number, snapshot_number_to_index_map, field,
     return s
 
 
+def get_pickle_filename_profile(run_name, snapshot_number, weight_field,
+                                save_dir):
+    pickle_filename = os.path.join(save_dir,
+                                   "{}-snapshot_{:03}-{}.pickle".format(run_name,
+                                                               snapshot_number,
+                                                               weight_field))
+
+    return pickle_filename
+
+
+def is_weight_field_processed(run_name, snapshot_number, weight_field,
+                              save_dir):
+    """For use filtering `save_phase_diagram_data_3D`"""
+    pickle_filename = get_pickle_filename_profile(run_name,
+                                                  snapshot_number,
+                                                  weight_field,
+                                                  save_dir,
+                                                  )
+    return os.path.exists(pickle_filename)
+
+
+def save_phase_diagram_data_3D(run_names,
+                               snapshot_numbers,
+                               weight_fields,
+                               weight_units,
+                               save_dir,
+                               n_bins=450,
+                               xlim_log=(-4, 3),
+                               ylim_log=(1, 7),
+                               verbose=True,
+                               ):
+    """Reads in a number of snapshots, and makes any phase diagrams that are
+    missing from `save_dir`. Assumes the x-axis is density and the y-axis
+    is temperature. Z-axis set by `weight_fields`
+
+    Inputs
+    ------
+    run_names: iterable of strings
+    snapshot_numbers: iterable of integers
+        assumes these snapshots exist as uncompressed snapshots
+    weight_fields: iterable of strings
+        assumes a field_type of "affected"
+    weight_units: dict
+        must have keys for all elements of weight_fields
+    save_dir: str formatted as a directory path
+    n_bins: Optional(int)
+    (x|y)lim_log: Optional(tuple of 2 numeric)
+        the limits of your phase diagram, in log10 values.
+        any data outside these limits are dropped from the phase diagram
+    verbose: Optional(bool)
+
+    Outputs
+    -------
+    None
+
+    Side Effects
+    ------------
+    May save a pickled data file for future use.
+
+    Notes
+    -----
+    Only checks for a file matching the phase diagram data name convention,
+    set by `get_pickle_filename_profile`. Doesn't check if the data is correct,
+    or using the same binning parameters.
+
+    Be careful about choosing n_bins! If you want a lot of options with
+    rebinning, then you'll need to chose a number with a diversity of prime
+    factors. If you just choose a power of 2, you'll only be able to
+    halve/double the resolution, which doesn't give you many options.
+    """
+    x_bins = np.logspace(*xlim_log, num=n_bins + 1)
+    y_bins = np.logspace(*ylim_log, num=n_bins + 1)
+
+    for run_name in run_names:
+        for snapshot_number in snapshot_numbers:
+            mask = np.array([not is_weight_field_processed(run_name,
+                                                           snapshot_number,
+                                                           weight_field,
+                                                           save_dir)
+                             for weight_field in weight_fields])
+            weight_fields_remaining = weight_fields[mask]
+            if verbose:
+                print("skipping already-processed fields {} for snapshot {}, run {}".format(
+                    weight_fields[~mask],
+                    snapshot_number,
+                    run_name,
+                    ))
+            if weight_fields_remaining.size == 0:
+                continue
+
+            inputs_dir, outputs_dir = get_dirs(run_name)
+            ts = load_snapshots(outputs_dir)
+            snapshot_filenames = get_snapshot_filenames(outputs_dir)
+
+            snapshot_number_to_index_map = {snapshot_filename_to_number(filename): i
+                                            for i, filename in enumerate(snapshot_filenames)}
+
+            uncompressed_snapshot_numbers = sorted(list(snapshot_number_to_index_map.keys()))
+
+            ds = load_ds_from_ts(ts, snapshot_number_to_index_map[snapshot_number])
+            dd = ds.all_data()
+
+            x_in = dd["affected", "density"].to("amu / cm**3").value
+            y_in = dd["affected", "temperature"].to("K").value
+
+            for weight_field in weight_fields_remaining:
+                pickle_filename = get_pickle_filename_profile(run_name,
+                                                              snapshot_number,
+                                                              weight_field,
+                                                              save_dir)
+
+                if verbose:
+                    print("creating save file: {}".format(pickle_filename))
+
+                Z, _, _ = np.histogram2d(
+                    x_in, y_in,
+                    weights=dd["affected", weight_field].to(weight_units[weight_field]).value,
+                    bins=[x_bins, y_bins],
+                )
+
+                with open(pickle_filename, "wb") as pickle_file:
+                    pickle.dump((x_bins, y_bins, Z), pickle_file)
+
+
+def grackle_temperature_1D(df):
+    """For use with `save_phase_diagram_data_3D`."""
+    fc = FluidContainer(my_chemistry_1D, df.shape[0])
+
+    fc["density"][:]    = df.Density.values / m_proton
+    fc["metal"][:]      = df.Density.values * df.Z.values / m_proton
+    fc["x-velocity"][:] = df.Velocity.values
+    fc["y-velocity"][:] = 0
+    fc["z-velocity"][:] = 0
+    gamma = 5/3
+    specific_internal_energy = (1 / (gamma - 1)) * df.Pressure.values \
+                                                 / df.Density.values
+    fc["energy"][:] = specific_internal_energy
+
+    fc.calculate_temperature()
+
+    return fc["temperature"]
+
+
+def grackle_cooling_rate_1D(df):
+    """For use with `save_phase_diagram_data_3D`."""
+    fc = FluidContainer(my_chemistry_1D, df.shape[0])
+
+    fc["density"][:]    = df.Density.values / m_proton
+    fc["metal"][:]      = df.Density.values * df.Z.values / m_proton
+    fc["x-velocity"][:] = df.Velocity.values
+    fc["y-velocity"][:] = 0
+    fc["z-velocity"][:] = 0
+    gamma = 5/3
+    specific_internal_energy = (1 / (gamma - 1)) * df.Pressure.values \
+                                                 / df.Density.values
+    fc["energy"][:] = specific_internal_energy
+
+    fc.calculate_temperature()
+    fc.calculate_cooling_time()
+
+    dt = 1  # [second]
+    fc.solve_chemistry(dt)
+
+    de = (specific_internal_energy - fc["energy"])
+
+    de_dt = de / dt
+
+    dE_dt = de_dt * df.Mass.values * M_solar
+
+    return dE_dt
+
+
+def get_closest_1D_snapshot(time,
+                            data_dir_1D="1D_data-high_time_res/",
+                            data_id_1D="F5509BF1-3F9E-4008-B795-0482ECED199B",
+                            verbose=False, very_verbose=False):
+    """`time` should be in Myr, with t=0 as the first SN (like the 3D runs)."""
+    run_summary = RunSummary(data_dir_1D, data_id_1D)
+    corrected_times = run_summary.times - run_summary.times[0]
+    corrected_times /= Myr
+
+    if verbose:
+        if very_verbose:
+            print("corrected_times: ", corrected_times)
+
+    i = np.argmin(np.abs(corrected_times - time))
+    if verbose:
+        print("using snapshot: {} at time {:.3f} Myr".format(i, corrected_times[i]))
+
+    df_1D_snapshot = run_summary.df.loc[i]
+
+    df_1D_snapshot["grackle_Temperature"] = grackle_temperature_1D(df_1D_snapshot)
+    df_1D_snapshot["grackle_cooling_rate"] = grackle_cooling_rate_1D(df_1D_snapshot)
+
+    return df_1D_snapshot
+
+
+def save_phase_diagram_data_1D(snapshot_numbers,
+                               weight_fields,
+                               save_dir,
+                               sample_run_name_3D,
+                               n_bins=450,
+                               xlim_log=(-4, 3),
+                               ylim_log=(1, 7),
+                               verbose=True,
+                               get_closest_1D_snapshot_kwargs=dict(),
+                               ):
+    """1D analog of `save_phase_diagram_data_1D`.
+
+    Minor differences:
+     - Requires argument `sample_run_name_3D` (string). This is only needed
+        for getting the snapshot times; actual snapshot data doesn't matter.
+        the snapshots of `snapshot_numbers` should be uncompressed.
+     - No need for `run_names`. Input data found using
+        `get_closest_1D_snapshot_kwargs`. Output data saved using a dummy
+        run_name of `1D`
+     - weight_units not accepted. Assumes:
+            particle_mass -> Msun
+            cooling_rate -> erg / Myr
+       Sorry that it's not more extensible =/
+     - weight_fields elements can only be `particle_mass` or `cooling_rate`
+       since they need to be hand-coded, unlike the 3D function
+
+    """
+    x_bins = np.logspace(*xlim_log, num=n_bins+1)
+    y_bins = np.logspace(*ylim_log, num=n_bins+1)
+
+    inputs_dir, outputs_dir = get_dirs(sample_run_name_3D)
+    ts = load_snapshots(outputs_dir)
+    snapshot_filenames = get_snapshot_filenames(outputs_dir)
+
+    snapshot_number_to_index_map = {snapshot_filename_to_number(filename): i
+                                    for i, filename in enumerate(snapshot_filenames)}
+
+    uncompressed_snapshot_numbers = sorted(list(snapshot_number_to_index_map.keys()))
+
+    for snapshot_number in snapshot_numbers:
+        current_time = load_ds_from_ts(ts, snapshot_number_to_index_map[snapshot_number]
+                                       ).current_time.value
+        current_time = float(current_time)
+        if verbose:
+            print(snapshot_number, current_time)
+
+        df_1D_snapshot = get_closest_1D_snapshot(
+            current_time, verbose=True, **get_closest_1D_snapshot_kwargs)
+
+        affected = (np.abs(df_1D_snapshot.Velocity) > 100)
+
+        for weight_field in weight_fields:
+            if weight_field == "particle_mass":
+                Z, _, _ = np.histogram2d(
+                    df_1D_snapshot["Density"][affected] / (m_proton),
+                    df_1D_snapshot["grackle_Temperature"][affected],
+                    weights=df_1D_snapshot["Mass"][affected],
+                    bins=[x_bins, y_bins],
+                )
+            elif weight_field == "cooling_rate":
+                # grackle incorrectly zero's out very low cooling rates :(
+                # so I'm changing it back to small, but non-zero, so that it
+                # won't appear "missing" in the plot
+                weights = df_1D_snapshot["grackle_cooling_rate"][affected] * Myr
+                weights[weights < .1] = .1
+                Z, _, _ = np.histogram2d(
+                    df_1D_snapshot["Density"][affected] / (m_proton),
+                    df_1D_snapshot["grackle_Temperature"][affected],
+                    weights=weights,
+                    bins=[x_bins, y_bins],
+                )
+            else:
+                raise NotImplementedError("Weight field {} not implemented in 1D".format(weight_field))
+
+            pickle_filename = get_pickle_filename_profile("1D",
+                                                          snapshot_number,
+                                                          weight_field,
+                                                          save_dir)
+            with open(pickle_filename, mode="wb") as pf:
+                pickle.dump((x_bins, y_bins, Z), pf)
+
+
 def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
                        SN_times, plots_dir,
                        weight_field,
@@ -393,7 +700,7 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
                        show_plot=True,
                        seaborn_style="ticks",
                        bins=50):
-    """ Creates [and optionally saves] a density-temperature phase diagram
+    """Create [and optionally save] a density-temperature phase diagram.
 
     Inputs
     ------
@@ -446,8 +753,6 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
         ppp.profile.set_field_unit("cooling_rate", "erg / Myr")
         ppp.plots[(field_type, "cooling_rate")].zmin, ppp.plots[(field_type, "cooling_rate")].zmax = (None, None)
 
-
-
     ppp.set_unit("density", "amu/cm**3")
     ppp.set_xlabel("Density $ [ m_\mathrm{H} \; \mathrm{cm}^{-3} ] $")
 
@@ -472,7 +777,6 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
         yt_plot_saver(ppp, plot_name, plots_dir)
 
     return ppp
-
 
 # ### Profile plotting (requires a bit more low-level programming)
 
@@ -535,7 +839,7 @@ field_units = {
 
 
 def format_time_str(current_time):
-    """ `current_time` should be in Myr """
+    """`current_time` should be in Myr."""
     if current_time < 0:
         raise RuntimeError("Invalid time: {}".format(current_time))
     elif current_time < 1e-3:
@@ -562,7 +866,7 @@ def plot_profile(ts, snapshot_number, snapshot_number_to_index_map, field,
                  rho_0, plots_dir,
                  save_plot=True,
                  show_plot=True):
-    """ Creates [and optionally saves] a radial profile plot of `field`
+    """Create [and optionally save] a radial profile plot of `field`
 
     Inputs
     ------
