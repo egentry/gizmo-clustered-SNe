@@ -443,6 +443,7 @@ def save_phase_diagram_data_3D(run_names,
                                xlim_log=(-4, 3),
                                ylim_log=(1, 7),
                                verbose=True,
+                               overwrite=False,
                                ):
     """Reads in a number of snapshots, and makes any phase diagrams that are
     missing from `save_dir`. Assumes the x-axis is density and the y-axis
@@ -463,6 +464,8 @@ def save_phase_diagram_data_3D(run_names,
         the limits of your phase diagram, in log10 values.
         any data outside these limits are dropped from the phase diagram
     verbose: Optional(bool)
+    overwrite: Optional(bool)
+        overwrites existing save files if True
 
     Outputs
     -------
@@ -493,15 +496,18 @@ def save_phase_diagram_data_3D(run_names,
                                                            weight_field,
                                                            save_dir)
                              for weight_field in weight_fields])
-            weight_fields_remaining = weight_fields[mask]
-            if verbose:
-                print("skipping already-processed fields {} for snapshot {}, run {}".format(
-                    weight_fields[~mask],
-                    snapshot_number,
-                    run_name,
-                    ))
-            if weight_fields_remaining.size == 0:
-                continue
+            if overwrite:
+                weight_fields_remaining = weight_fields
+            else:
+                weight_fields_remaining = weight_fields[mask]
+                if verbose:
+                    print("skipping already-processed fields {} for snapshot {}, run {}".format(
+                        weight_fields[~mask],
+                        snapshot_number,
+                        run_name,
+                        ))
+                if weight_fields_remaining.size == 0:
+                        continue
 
             inputs_dir, outputs_dir = get_dirs(run_name)
             ts = load_snapshots(outputs_dir)
