@@ -14,6 +14,20 @@ This work is an extension of my previous project, where I simulated some of the 
 The general idea is to re-run some of those simulations for the same star clusters, but now in 3D, and maybe with magnetic fields.
 
 -------
+# Find your way here from the paper?
+You might be interested in:
+ - `scripts/publication_plots.ipynb`: shows how we created every plot in the paper. Includes png version of every plot. Also includes a bunch of extra plots / diagnostics related to the data being shown.
+ - `scripts/plan_energy_content*.ipynb`: helps explain why we picked the times we did for our phase diagrams + snapshot density slices.  Also provides more information about the energy evolution of the simulations than what we could include in the paper.
+ - `scripts/2d cooling curve.ipynb`: a 2d visualization of the cooling curve. Usually you just see the cooling curve at fixed density, but the density dependence does matter for some questions. This takes the same axes as our phase diagrams, and plots things like the specific cooling rate and the cooling time at each point in (density, temperature) space.  In theory, you can use take the mass-weighted phase diagram, multiply it by the 2d cooling curve, and get back the cooling-weighted phase diagram.
+
+
+## Want data?
+ - I can easily give you sqlite tables of reduced data for each simulation, containing things like mass, momentum, energy (kinetic, internal, magnetic) at each snapshot.
+ - I can easily give you some versions of the raw 1D data.
+ - The raw 3D data is _much_ more difficult. It is about 5 TB in size.  I might be able to run analysis scripts locally for you. Alternative we _might_ be able to work something out to transfer a subset of the data.  Email me if you want to talk about our options.
+
+-------
+# Want to actually run the code?
 
 In general, the version of GIZMO that I'm using is only very slightly modified from the public version of GIZMO.  Most of the feedback injection that I'm doing actually happens outside of the C code---I stop the simulation at the time of each SN, create a new HDF5 snapshot file using python, then restart the C code.  This means the C code should be _fairly_ clean, although not perfectly so.  Get in touch with me over email if you have any questions. 
 
