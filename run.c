@@ -102,8 +102,21 @@ void run(void)
         
         do_second_halfstep_kick();	/* this does the half-step kick at the end of the timestep */
         
+        if(ThisTask == 0)
+        {
+            printf("about to enter `calculate_non_standard_physics` after 2nd halfkick\n");
+        }
         calculate_non_standard_physics();	/* source terms are here treated in a strang-split fashion */
-        
+        if(ThisTask == 0)
+        {
+            printf("just exited `calculate_non_standard_physics`\n");
+        }        
+
+        if(ThisTask == 0)
+        {
+            printf("about to enter stopflag check\n");
+        }
+
         /* Check whether we need to interrupt the run */
         int stopflag = 0;
         if(ThisTask == 0)
@@ -166,11 +179,36 @@ void run(void)
             stopflag = 0;
             All.TimeLastRestartFile += report_time();
         }
-        
+
+        if(ThisTask == 0)
+        {
+            printf("about to end stopflag check\n");
+        }
+       
+        if(ThisTask == 0)
+        {
+            printf("about to enter `set_random_numbers`\n");
+        } 
         set_random_numbers();	/* draw a new list of random numbers */
-        
+        if(ThisTask == 0)
+        {
+            printf("just exited `set_random_numbers`\n");
+        }
+
+        if(ThisTask == 0)
+        {
+            printf("about to enter `report_memory_usage`\n");
+        }
         report_memory_usage(&HighMark_run, "RUN");
-        
+        if(ThisTask == 0)
+        {
+            printf("just exited `report_memory_usage`\n");
+        }       
+
+        if(ThisTask == 0)
+        {
+            printf("finished main timestep iteration loop\n");
+        }
     }
     
 }
@@ -214,16 +252,31 @@ void calculate_non_standard_physics(void)
 #if defined(FLAG_NOT_IN_PUBLIC_CODE) || defined(FLAG_NOT_IN_PUBLIC_CODE)
 #endif // ifdef FLAG_NOT_IN_PUBLIC_CODE or FLAG_NOT_IN_PUBLIC_CODE
     
-    
+    if(ThisTask == 0)
+    {
+        printf("about to enter cooling\n");
+    }    
 #ifdef COOLING	/**** radiative cooling and star formation *****/
 #ifdef GALSF
+    if(ThisTask == 0)
+    {
+        printf("specifically entering `cooling_and_starformation`\n");
+    }
     cooling_and_starformation(); // standard cooling+star formation routine //
 #else // ifdef GALSF else
+    if(ThisTask == 0)
+    { 
+        printf("specifically entering `cooling_only`\n");
+    }
     cooling_only();
 #endif // closes if GALSF
     CPU_Step[CPU_COOLINGSFR] += measure_time(); // finish time calc for SFR+cooling
 #endif /*ends COOLING */
     
+    if(ThisTask == 0)
+    {
+       printf("just exited cooling\n");
+    }
     
     
     
@@ -233,6 +286,11 @@ void calculate_non_standard_physics(void)
 
 void compute_statistics(void)
 {
+    if(ThisTask == 0)
+    {
+        printf("starting compute_statistics\n");
+    }
+
     if((All.Time - All.TimeLastStatistics) >= All.TimeBetStatistics)
     {
 #if !defined(EVALPOTENTIAL)          // DAA: compute_potential is not defined if EVALPOTENTIAL is on... check!
@@ -244,6 +302,11 @@ void compute_statistics(void)
         
         
         All.TimeLastStatistics += All.TimeBetStatistics;
+    }
+
+    if(ThisTask == 0)
+    {
+        printf("done compute_statistics\n");
     }
 }
 
