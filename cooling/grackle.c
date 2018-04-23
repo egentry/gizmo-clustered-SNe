@@ -220,6 +220,35 @@ double CallGrackle(double u_old, double rho, double dt, double *ne_guess, int ta
             returnval = gamma;
             break;
     } //end switch
+
+    free( my_fields.grid_dimension );
+    free( my_fields.grid_start );
+    free( my_fields.grid_end );
+    free( my_fields.density );
+    free( my_fields.internal_energy );
+    free( my_fields.x_velocity );
+    free( my_fields.y_velocity );
+    free( my_fields.z_velocity );
+    free( my_fields.metal_density );
+    free( my_fields.HI_density );
+    free( my_fields.HII_density );
+    free( my_fields.HeI_density );
+    free( my_fields.HeII_density );
+    free( my_fields.HeIII_density );
+    free( my_fields.e_density );
+    free( my_fields.HM_density );
+    free( my_fields.H2I_density );
+    free( my_fields.H2II_density );
+    free( my_fields.DI_density );
+    free( my_fields.DII_density );
+    free( my_fields.HDI_density );
+    free( my_fields.volumetric_heating_rate );
+    free( my_fields.specific_heating_rate );
+    free( my_fields.RT_HI_ionization_rate );
+    free( my_fields.RT_HeI_ionization_rate );
+    free( my_fields.RT_HeII_ionization_rate );
+    free( my_fields.RT_H2_dissociation_rate );
+    free( my_fields.RT_heating_rate );
     
     return returnval;
 }
