@@ -953,6 +953,11 @@ void domain_exchange(void)
 
   requests = (MPI_Request *) mymalloc("requests", max_requests * NTask * sizeof(MPI_Request));
 
+  if(ThisTask==0)
+  {
+    printf("posting MPI_Irecv's within `domain_exchange`\n");  
+  }
+
   for(ngrp = 1; ngrp < (1 << PTask); ngrp++)
     {
       target = ThisTask ^ ngrp;
@@ -1001,6 +1006,11 @@ void domain_exchange(void)
 				   posted before the sends, which helps the stability of MPI on 
 				   bluegene, and perhaps some mpich1-clusters */
 
+  if(ThisTask == 0)
+  {
+    printf("posting MPI_Isend's within `domain_exchange`\n");
+  }
+
   for(ngrp = 1; ngrp < (1 << PTask); ngrp++)
     {
       target = ThisTask ^ ngrp;
@@ -1044,6 +1054,11 @@ void domain_exchange(void)
 
   MPI_Waitall(n_requests, requests, MPI_STATUSES_IGNORE);
 
+  if(ThisTask==0)
+  {
+    printf("done MPI_Irecv's within `domain_exchange`\n");
+  }
+
   if(n_requests > max_requests * NTask)
     {
       printf("Not enough memory reserved for requests: %d > %d !\n", n_requests, max_requests * NTask);
@@ -1052,6 +1067,11 @@ void domain_exchange(void)
 
   myfree(requests);
 #else
+
+  if(ThisTask==0)
+  {
+    printf("about to post MPI_Sendrecv's within `domain_exchange`\n");
+  }
 
   for(ngrp = 1; ngrp < (1 << PTask); ngrp++)
     {
@@ -1109,6 +1129,12 @@ void domain_exchange(void)
 	    }
 	}
     }
+
+  if(ThisTask==0)
+  {
+    printf("completed MPI_Sendrecv's within `domain_exchange`\n");
+  }
+
 
 
 #endif
