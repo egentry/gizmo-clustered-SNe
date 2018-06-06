@@ -759,7 +759,7 @@ def plot_phase_diagram(ts, snapshot_number, snapshot_number_to_index_map,
         ppp.profile.set_field_unit("cooling_rate", "erg / Myr")
         ppp.plots[(field_type, "cooling_rate")].zmin, ppp.plots[(field_type, "cooling_rate")].zmax = (None, None)
 
-    ppp.set_unit("density", "amu/cm**3")
+    ppp.profile.set_x_unit("amu/cm**3")
     ppp.set_xlabel("Density $ [ m_\mathrm{H} \; \mathrm{cm}^{-3} ] $")
 
     ppp.set_xlim(1e-4, 1e3)
