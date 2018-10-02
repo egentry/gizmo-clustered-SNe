@@ -8,6 +8,7 @@ import seaborn as sns
 import pickle
 from matplotlib import pyplot as plt
 import warnings
+import numba
 
 from units import M_solar, m_proton, pc, yr, Myr, gamma, km, s
 import MHD
@@ -305,7 +306,7 @@ field_type = {
     "pressure": "gas",
     "velocity_magnitude": "gas",
     "radius": "index",
-    "metallicity": "gas"
+    "metallicity": "gas",
 }
 
 
@@ -939,3 +940,54 @@ def plot_profile(ts, snapshot_number, snapshot_number_to_index_map, field,
             os.mkdir(os.path.join(plots_dir, subdir))
         plot_name = os.path.join(subdir, "{}_snapshot_{:0>3}".format(field, snapshot_number))
         mpl_plot_saver(plt.gcf(), plot_name, plots_dir)
+
+
+@numba.autojit()
+def cubic_spline_kernel(distance, scale):
+    """ see https://pysph.readthedocs.io/en/latest/reference/kernels.html?highlight=cubic#pysph.base.kernels.CubicSpline"""
+    sigma_3 = scale**-3
+
+    q = distance / scale
+
+    result = np.zeros_like(q)
+
+    mask_01 = (q >= 0) & (q <= 1)
+    result[mask_01] = (1 - (1.5 * q[mask_01]**2)*(1 - .5*q[mask_01]))
+
+    mask_12 = (q > 1) & (q <= 2)
+    result[mask_12] = .25 * (2 - q[mask_12])**3
+
+    result *= sigma_3
+    return result
+
+def rbf(distances,
+        indices,
+        values_train,
+        scales_train,
+        knn,
+        verbose=False):
+    """`knn` should be a `sklearn.neighbors.NearestNeighbors` instance"""
+
+
+    if verbose:
+        print("distances.shape: ", distances.shape)
+
+    scales_train = scales_train[indices]
+    values_train = values_train[indices]
+    if verbose:
+        print("scales_train.shape: ", scales_train.shape)
+        print("values_train.shape: ", values_train.shape)
+
+    weights = cubic_spline_kernel(distances, scales_train)
+
+    if verbose:
+        print("weight_sum: ", weights.sum(axis=0))
+
+    weights = weights / weights.sum(axis=0)
+
+    if verbose:
+        print("values mean: ", values_train.mean())
+
+    value = (values_train * weights).sum()
+
+    return value
