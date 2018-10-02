@@ -44,6 +44,9 @@ grackle/local/lib/*
 
 runs/*/outputs/*.tar.gz
 
+# yt particle index files
+*ewah
+
 # Object files
 *.o
 *.ko
@@ -77,3 +80,4 @@ runs/*/outputs/*.tar.gz
 # Debug files
 *.dSYM/
 *.su
+
