@@ -906,7 +906,7 @@ def plot_profile(ts, snapshot_number, snapshot_number_to_index_map, field,
         rs, densities = create_density_profile(ds, n_bins=64)
         plt.plot(rs, densities / field_units[field])
 
-        plt.ylim(ymin=1e-4)
+        plt.ylim(bottom=1e-4)
 
         plt.axhline(rho_0, linestyle="dashed", color="k")
 
