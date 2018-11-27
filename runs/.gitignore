@@ -1,5 +1,4 @@
 *.hdf5
 compress_and_delete_all.o*
 compress_and_delete_all.e*
-*.db
 plots

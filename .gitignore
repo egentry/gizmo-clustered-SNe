@@ -81,3 +81,5 @@ runs/*/outputs/*.tar.gz
 *.dSYM/
 *.su
 
+# Whitelist
+!output_times.txt

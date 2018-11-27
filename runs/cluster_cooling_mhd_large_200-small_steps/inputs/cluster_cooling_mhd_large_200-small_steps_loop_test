@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+#PBS -l nodes=2:ppn=16
+#PBS -l walltime=48:00:00
+#
+#PBS -q normal
+#
+#PBS -M egentry@ucsc.edu
+#PBS -m e
+#
+#PBS -e ./runs/cluster_cooling_mhd_large_200/inputs/
+#PBS -o ./runs/cluster_cooling_mhd_large_200/inputs/
+#
+#PBS -S /bin/bash
+#
+cd $PBS_O_WORKDIR
+
+source $HOME/.bashrc
+export LD_LIBRARY_PATH="grackle/local/lib:$LD_LIBRARY_PATH"
+
+# number of processors
+NP=32
+
+RUN_NAME=cluster_cooling_mhd_large_200
+RUN_DIR=./runs/$RUN_NAME
+
+INPUTS_DIR=$RUN_DIR/inputs
+
+OUTPUT_FILE=$INPUTS_DIR/${RUN_NAME}_loop_test.byhand.o${PBS_JOBID}
+ERROR_FILE=$INPUTS_DIR/${RUN_NAME}_loop_test.byhand.e${PBS_JOBID}
+
+touch $OUTPUT_FILE
+# touch $ERROR_FILE
+
+echo $PBS_O_WORKDIR >> $OUTPUT_FILE
+
+
+echo $PBS_NODEFILE >> $OUTPUT_FILE
+cat $PBS_NODEFILE >> $OUTPUT_FILE
+
+
+
+
+COUNTER=0
+while [ ! -f $INPUTS_DIR/end ]; do
+	echo Counter: $COUNTER 1>>$OUTPUT_FILE 2>&1
+	let COUNTER+=1
+
+	touch $INPUTS_DIR/end
+
+	# FROM_CHECKPOINT can be "--from-checkpoint', which is passed in at qsub time
+	# It forces the code to *always* restart from checkpoints, rather than restart files
+	# In practice, this only matters on the first loop, and is useful if your most recent checkpoint
+	# is newer than your most recent restartfile
+	echo from_checkpoint $FROM_CHECKPOINT 1>>$OUTPUT_FILE 2>&1
+
+	echo "before entering scripts" >> $OUTPUT_FILE
+	cd scripts
+	echo "in scripts" >> $OUTPUT_FILE
+	source activate py35
+	echo "activate py35" >> $OUTPUT_FILE
+	mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode 16 ./add_SN ../$INPUTS_DIR/end ../$RUN_DIR $FROM_CHECKPOINT  1>>../$OUTPUT_FILE 2>&1
+	source deactivate
+	echo "deactivated py35" >> $OUTPUT_FILE
+	cd $PBS_O_WORKDIR
+
+	# make sure we don't run the code if the python failed, or decided the code shouldn't be run
+	if [ -f $INPUTS_DIR/end ]
+		then break
+	fi
+
+	# Adds the variable RESTART_TYPE, which tells gizmo whether to restart from checkpoints or restart files
+	source  $INPUTS_DIR/RESTART 
+	echo "sourced restart file" >> $OUTPUT_FILE
+	echo restart_type $RESTART_TYPE 1>>$OUTPUT_FILE 2>&1
+
+	time mpirun -x LD_LIBRARY_PATH -hostfile $PBS_NODEFILE -np $NP -npernode 16 $INPUTS_DIR/GIZMO $INPUTS_DIR/$RUN_NAME.params.restart $RESTART_TYPE  1>>$OUTPUT_FILE 2>&1
+
+done

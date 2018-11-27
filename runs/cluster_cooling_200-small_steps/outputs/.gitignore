@@ -1,0 +1,4 @@
+*.hdf5
+*.hdf5.tar.gz
+plots
+
