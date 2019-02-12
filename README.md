@@ -47,3 +47,20 @@ If you're wondering where to start, here are a few key files to look at:
  - `scripts/generate_ICs.ipynb`. As the name suggests, it's the script that I use to generate the initial conditions for my simulations (uniform ISM, with/without magnetic fields, with varying box sizes and varying resolution).  At the bottom it also has a section "What to do next?" which will help you get going.
  - Any of the `runs/*/inputs/*_loop-*` files. Those are qsub batch scripts.
  - Any of the `runs/*/inputs/*params.base` files. Files of this form are submitted as input runtime parameter files for GIZMO. (In practice I don't actually submit `*params.base` -- I use them to build `*params.restart` files, adjusting things like `InitCondFile`, `TimeBegin`, `TimeMax`, `TimeOfFirstSnapshot` and `TimeBetSnapshot` for the appropriate values at a given part of the simulation.)
+
+# Requirements
+## For the core C code
+More explanation [here](http://www.tapir.caltech.edu/~phopkins/Site/GIZMO_files/gizmo_documentation.html#tutorial-requirements)
+ - MPI-enabled C compiler
+ - GSL
+ - HDF5
+ - FFTW 2.x (**not** 3.x); MPI-capable
+ - Grackle (version 3)
+ 
+ ## For the python code
+ This will only be for the notebooks to generate initial conditions and for the scripts to add SNe. This will not include all the required packages for the various analysis notebooks.
+  - Python 3
+  - numpy
+  - astropy
+  - h5py
+  - scipy
